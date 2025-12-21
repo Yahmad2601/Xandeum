@@ -5,6 +5,7 @@ import { NetworkMap } from "@/components/NetworkMap";
 import { Sparkline } from "@/components/Sparkline";
 import { StatCard } from "@/components/StatCard";
 import { CommandPalette } from "@/components/CommandPalette";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import { Button } from "@/components/ui/button";
 import { 
   Server, 
@@ -132,87 +133,100 @@ export default function Home() {
           />
         </div>
 
-        {/* Map Section */}
-        <section className="glass-panel rounded-2xl p-1">
-          <NetworkMap nodes={nodes} />
-        </section>
+        {/* Main Content Grid - Map/Table on left, Activity on right */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Map and Table */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Map Section */}
+            <section className="glass-panel rounded-2xl p-1">
+              <NetworkMap nodes={nodes} />
+            </section>
 
-        {/* Nodes Table */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Network Nodes</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Showing {nodes.length} nodes</span>
-            </div>
+            {/* Nodes Table */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Network Nodes</h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Showing {nodes.length} nodes</span>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/5 overflow-hidden bg-card/30 backdrop-blur-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-white/5 bg-white/[0.02]">
+                        <th className="px-6 py-4 font-medium text-muted-foreground">pNode</th>
+                        <th className="px-6 py-4 font-medium text-muted-foreground">Status</th>
+                        <th className="px-6 py-4 font-medium text-muted-foreground">Location</th>
+                        <th className="px-6 py-4 font-medium text-muted-foreground text-right">Storage</th>
+                        <th className="px-6 py-4 font-medium text-muted-foreground text-right">Earnings</th>
+                        <th className="px-6 py-4 font-medium text-muted-foreground text-center">24h Uptime</th>
+                        <th className="px-6 py-4 text-right"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {nodes.map((node) => (
+                        <tr key={node.id} className="group hover:bg-white/[0.02] transition-colors">
+                          <td className="px-6 py-4">
+                            <Link href={`/node/${node.pubkey}`} className="block">
+                              <div className="flex flex-col cursor-pointer">
+                                <span className="font-mono font-medium text-primary group-hover:underline decoration-primary/50 underline-offset-4 transition-all">
+                                  {node.pubkey.substring(0, 8)}...{node.pubkey.substring(node.pubkey.length - 4)}
+                                </span>
+                                <span className="text-xs text-muted-foreground mt-0.5">v{node.version}</span>
+                              </div>
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                              node.status === 'active' 
+                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                                : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
+                                node.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                              }`} />
+                              {node.status.toUpperCase()}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center text-muted-foreground">
+                              {node.country}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right font-mono">
+                            {(node.totalStorage / 1000).toFixed(2)} TB
+                          </td>
+                          <td className="px-6 py-4 text-right font-mono text-foreground">
+                            {node.stoincEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })} STO
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex justify-center">
+                              <Sparkline data={node.uptimeHistory || []} />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <Link href={`/node/${node.pubkey}`} className="text-muted-foreground hover:text-foreground">
+                              <MoreHorizontal className="w-5 h-5 ml-auto" />
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
           </div>
 
-          <div className="rounded-xl border border-white/5 overflow-hidden bg-card/30 backdrop-blur-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-6 py-4 font-medium text-muted-foreground">pNode</th>
-                    <th className="px-6 py-4 font-medium text-muted-foreground">Status</th>
-                    <th className="px-6 py-4 font-medium text-muted-foreground">Location</th>
-                    <th className="px-6 py-4 font-medium text-muted-foreground text-right">Storage</th>
-                    <th className="px-6 py-4 font-medium text-muted-foreground text-right">Earnings</th>
-                    <th className="px-6 py-4 font-medium text-muted-foreground text-center">24h Uptime</th>
-                    <th className="px-6 py-4 text-right"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {nodes.map((node) => (
-                    <tr key={node.id} className="group hover:bg-white/[0.02] transition-colors">
-                      <td className="px-6 py-4">
-                        <Link href={`/node/${node.pubkey}`} className="block">
-                          <div className="flex flex-col cursor-pointer">
-                            <span className="font-mono font-medium text-primary group-hover:underline decoration-primary/50 underline-offset-4 transition-all">
-                              {node.pubkey.substring(0, 8)}...{node.pubkey.substring(node.pubkey.length - 4)}
-                            </span>
-                            <span className="text-xs text-muted-foreground mt-0.5">v{node.version}</span>
-                          </div>
-                        </Link>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                          node.status === 'active' 
-                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
-                            : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            node.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
-                          }`} />
-                          {node.status.toUpperCase()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center text-muted-foreground">
-                          {node.country}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right font-mono">
-                        {(node.totalStorage / 1000).toFixed(2)} TB
-                      </td>
-                      <td className="px-6 py-4 text-right font-mono text-foreground">
-                        {node.stoincEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })} STO
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-center">
-                          <Sparkline data={node.uptimeHistory || []} />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link href={`/node/${node.pubkey}`} className="text-muted-foreground hover:text-foreground">
-                          <MoreHorizontal className="w-5 h-5 ml-auto" />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Right Column - Activity Feed */}
+          <div className="lg:col-span-1">
+            <div className="rounded-xl border border-white/5 bg-card/30 backdrop-blur-sm p-6 h-fit">
+              <ActivityFeed />
             </div>
           </div>
-        </section>
+        </div>
       </main>
     </div>
   );
