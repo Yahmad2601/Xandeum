@@ -6,6 +6,7 @@ import { Sparkline } from "@/components/Sparkline";
 import { StatCard } from "@/components/StatCard";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { TopRegions } from "@/components/TopRegions";
 import { Button } from "@/components/ui/button";
 import { 
   Server, 
@@ -138,8 +139,16 @@ export default function Home() {
           {/* Left Column - Map and Table */}
           <div className="lg:col-span-2 space-y-8">
             {/* Map Section */}
-            <section className="glass-panel rounded-2xl p-1">
-              <NetworkMap nodes={nodes} />
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold">Global Network Map</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 glass-panel rounded-2xl p-1">
+                  <NetworkMap nodes={nodes} />
+                </div>
+                <div className="rounded-xl border border-white/5 bg-card/30 backdrop-blur-sm p-6 h-fit">
+                  <TopRegions nodes={nodes} />
+                </div>
+              </div>
             </section>
 
             {/* Nodes Table */}
