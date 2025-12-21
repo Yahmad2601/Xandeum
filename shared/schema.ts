@@ -14,6 +14,7 @@ export const nodes = pgTable("nodes", {
   networkCapacity: doublePrecision("network_capacity").notNull().default(200000), // Default 200 PB
   stoincGenerated: doublePrecision("stoinc_generated").notNull().default(0), // Cumulative STOINC rewards
   uptimeHistory: jsonb("uptime_history").$type<number[]>().notNull(),
+  weeklyUptimeHistory: jsonb("weekly_uptime_history").$type<number[]>().notNull().default([]),
   lastUpdated: text("last_updated").notNull(),
 });
 

@@ -7,6 +7,8 @@ import { StatCard } from "@/components/StatCard";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { TopRegions } from "@/components/TopRegions";
+import { NetworkHealth } from "@/components/NetworkHealth";
+import { UptimeChart } from "@/components/UptimeChart";
 import { Button } from "@/components/ui/button";
 import { 
   Server, 
@@ -17,6 +19,29 @@ import {
   RefreshCw,
   MoreHorizontal
 } from "lucide-react";
+import type { Node } from "@shared/schema";
+
+const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function generateWeeklyChartData(nodes: Node[]) {
+  const weeklyData = Array.from({ length: 7 }).map(() => 0);
+  const counts = Array.from({ length: 7 }).map(() => 0);
+  
+  nodes.forEach((node) => {
+    const history = node.weeklyUptimeHistory || [];
+    history.forEach((uptime, idx) => {
+      if (idx < 7) {
+        weeklyData[idx] += uptime;
+        counts[idx]++;
+      }
+    });
+  });
+
+  return dayLabels.map((day, idx) => ({
+    day,
+    uptime: counts[idx] > 0 ? weeklyData[idx] / counts[idx] : 99.5,
+  }));
+}
 
 export default function Home() {
   const { data: nodes = [], isLoading, isError } = useNodes();
@@ -97,6 +122,9 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
+        {/* Network Health Bar */}
+        <NetworkHealth activeNodes={activePNodes} totalNodes={nodes.length} />
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard 
@@ -133,6 +161,14 @@ export default function Home() {
             icon={<Globe className="w-5 h-5" />}
           />
         </div>
+
+        {/* 7-Day Uptime Chart */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">7-Day Uptime Trend</h2>
+          <div className="rounded-xl border border-white/5 bg-card/30 backdrop-blur-sm p-6">
+            <UptimeChart data={generateWeeklyChartData(nodes)} />
+          </div>
+        </section>
 
         {/* Main Content Grid - Map/Table on left, Activity on right */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

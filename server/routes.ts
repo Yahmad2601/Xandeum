@@ -21,6 +21,11 @@ function generateMockNodes(count: number): InsertNode[] {
       isOffline ? 0 : 95 + Math.random() * 5
     );
 
+    // Generate 7-day weekly history (7 points)
+    const weeklyHistory = Array.from({ length: 7 }).map(() =>
+      isOffline ? 0 : 97 + Math.random() * 3
+    );
+
     return {
       pubkey: `pubkey-${Math.random().toString(36).substring(7)}-${i}`,
       ip: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
@@ -32,6 +37,7 @@ function generateMockNodes(count: number): InsertNode[] {
       networkCapacity: networkCapacity, // Distributed capacity
       stoincGenerated: Math.random() * 25000, // Cumulative STOINC rewards
       uptimeHistory: history,
+      weeklyUptimeHistory: weeklyHistory,
       lastUpdated: new Date().toISOString()
     };
   });
