@@ -22,8 +22,11 @@ export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Derived stats
-  const totalStorage = nodes.reduce((acc, node) => acc + node.totalStorage, 0);
-  const activeNodes = nodes.filter(n => n.status === "active").length;
+  const totalStorageUsed = nodes.reduce((acc, node) => acc + node.totalStorage, 0);
+  const networkCapacity = nodes.length > 0 ? nodes[0].networkCapacity : 200000;
+  const activePNodes = nodes.filter(n => n.status === "active").length;
+  const totalStoincGenerated = nodes.reduce((acc, node) => acc + node.stoincGenerated, 0);
+  const uniqueCountries = new Set(nodes.map(n => n.country)).size;
   const avgUptime = 99.8; // Mock value for now
 
   if (isLoading) {
@@ -93,31 +96,38 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard 
-            title="Total Storage" 
-            value={`${(totalStorage / 1000).toFixed(1)} PB`} 
-            trend="+12.5%" 
+            title="Network Capacity" 
+            value={`${(networkCapacity / 1000).toFixed(1)} PB`} 
+            trend="Theoretical" 
             trendUp={true}
             icon={<Database className="w-5 h-5" />}
           />
           <StatCard 
-            title="Active Validators" 
-            value={activeNodes} 
+            title="Storage Used" 
+            value={`${(totalStorageUsed / 1000).toFixed(2)} PB`} 
+            trend="+8.2%" 
+            trendUp={true}
+            icon={<Database className="w-5 h-5" />}
+          />
+          <StatCard 
+            title="Active pNodes" 
+            value={activePNodes} 
             trend="+3" 
             trendUp={true}
             icon={<Server className="w-5 h-5" />}
           />
           <StatCard 
-            title="Network Uptime" 
-            value={`${avgUptime}%`} 
-            trend="-0.1%" 
-            trendUp={false}
+            title="STOINC Generated" 
+            value={`$${(totalStoincGenerated / 1000).toFixed(1)}K`} 
+            trend="+15.3%" 
+            trendUp={true}
             icon={<Activity className="w-5 h-5" />}
           />
           <StatCard 
-            title="Global Reach" 
-            value={`${new Set(nodes.map(n => n.country)).size} Countries`} 
+            title="pNode Distribution" 
+            value={`${uniqueCountries} Countries`} 
             icon={<Globe className="w-5 h-5" />}
           />
         </div>
@@ -141,7 +151,7 @@ export default function Home() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-6 py-4 font-medium text-muted-foreground">Validator</th>
+                    <th className="px-6 py-4 font-medium text-muted-foreground">pNode</th>
                     <th className="px-6 py-4 font-medium text-muted-foreground">Status</th>
                     <th className="px-6 py-4 font-medium text-muted-foreground">Location</th>
                     <th className="px-6 py-4 font-medium text-muted-foreground text-right">Storage</th>

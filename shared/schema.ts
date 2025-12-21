@@ -11,6 +11,8 @@ export const nodes = pgTable("nodes", {
   status: text("status", { enum: ["active", "offline"] }).notNull(),
   totalStorage: doublePrecision("total_storage").notNull(),
   stoincEarnings: doublePrecision("stoinc_earnings").notNull(),
+  networkCapacity: doublePrecision("network_capacity").notNull().default(200000), // Default 200 PB
+  stoincGenerated: doublePrecision("stoinc_generated").notNull().default(0), // Cumulative STOINC rewards
   uptimeHistory: jsonb("uptime_history").$type<number[]>().notNull(),
   lastUpdated: text("last_updated").notNull(),
 });

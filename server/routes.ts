@@ -10,6 +10,7 @@ function generateMockNodes(count: number): InsertNode[] {
   const countries = ["US", "DE", "GB", "JP", "SG", "CA", "AU", "FR"];
   const versions = ["1.0.0", "1.0.1", "1.1.0-beta"];
   const statuses = ["active", "active", "active", "offline"] as const;
+  const networkCapacity = 200000; // 200 PB total
 
   return Array.from({ length: count }).map((_, i) => {
     const isOffline = Math.random() > 0.9;
@@ -26,8 +27,10 @@ function generateMockNodes(count: number): InsertNode[] {
       version: versions[Math.floor(Math.random() * versions.length)],
       country: countries[Math.floor(Math.random() * countries.length)],
       status: isOffline ? "offline" : "active",
-      totalStorage: Math.floor(Math.random() * 1000000), // KB or similar
+      totalStorage: Math.floor(Math.random() * 150000), // Storage used (KB or similar)
       stoincEarnings: Math.random() * 500,
+      networkCapacity: networkCapacity, // Distributed capacity
+      stoincGenerated: Math.random() * 25000, // Cumulative STOINC rewards
       uptimeHistory: history,
       lastUpdated: new Date().toISOString()
     };
