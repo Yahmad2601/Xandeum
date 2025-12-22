@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
-import { useNodes, useRefreshNodes } from "@/hooks/use-nodes";
+import { useNodes, useRefreshNodes, useCrawlerStatus } from "@/hooks/use-nodes";
 import { NetworkMap } from "@/components/NetworkMap";
 import { Sparkline } from "@/components/Sparkline";
 import { StatCard } from "@/components/StatCard";
@@ -9,7 +9,9 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { TopRegions } from "@/components/TopRegions";
 import { NetworkHealth } from "@/components/NetworkHealth";
 import { UptimeChart } from "@/components/UptimeChart";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   Server, 
   Database, 
@@ -17,7 +19,8 @@ import {
   Activity, 
   Search, 
   RefreshCw,
-  MoreHorizontal
+  MoreHorizontal,
+  Radio
 } from "lucide-react";
 import type { Node } from "@shared/schema";
 
@@ -46,6 +49,7 @@ function generateWeeklyChartData(nodes: Node[]) {
 export default function Home() {
   const { data: nodes = [], isLoading, isError } = useNodes();
   const { mutate: refresh, isPending: isRefreshing } = useRefreshNodes();
+  const { data: crawlerStatus } = useCrawlerStatus();
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Derived stats
@@ -83,35 +87,53 @@ export default function Home() {
       <CommandPalette open={searchOpen} setOpen={setSearchOpen} nodes={nodes} />
 
       {/* Header */}
-      <header className="border-b border-white/5 bg-background/50 backdrop-blur-lg sticky top-0 z-40">
+      <header className="border-b border-border bg-background/50 backdrop-blur-lg sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/20">
               <Activity className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+            <h1 className="text-xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
               Xandeum<span className="text-primary">Scan</span>
             </h1>
           </div>
           
           <div className="flex items-center gap-3">
+            {/* Crawler Status Badge */}
+            {crawlerStatus && (
+              <Badge 
+                variant="outline" 
+                className="hidden sm:flex items-center gap-2 bg-card border-border text-xs"
+              >
+                <Radio className={`w-3 h-3 ${crawlerStatus.isRunning ? 'text-green-500 animate-pulse' : 'text-red-500'}`} />
+                <span className="text-muted-foreground">
+                  Crawler: <span className="text-foreground font-medium">{crawlerStatus.isRunning ? 'Active' : 'Stopped'}</span>
+                  {crawlerStatus.isRunning && (
+                    <span className="ml-1">• {crawlerStatus.crawlCount} crawls</span>
+                  )}
+                </span>
+              </Badge>
+            )}
+
             <Button 
               variant="outline" 
               size="sm" 
-              className="hidden md:flex bg-card/50 border-white/10 text-muted-foreground hover:text-foreground"
+              className="hidden md:flex bg-card border-border text-muted-foreground hover:text-foreground"
               onClick={() => setSearchOpen(true)}
             >
               <Search className="w-4 h-4 mr-2" />
               <span className="mr-4">Search nodes...</span>
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-white/10 bg-white/5 px-1.5 font-mono text-[10px] font-medium opacity-100">
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
                 <span className="text-xs">⌘</span>K
               </kbd>
             </Button>
             
+            <ThemeToggle />
+
             <Button 
               size="icon" 
               variant="ghost" 
-              className="text-muted-foreground hover:text-white"
+              className="text-muted-foreground hover:text-foreground"
               onClick={() => refresh()}
               disabled={isRefreshing}
             >
@@ -122,44 +144,56 @@ export default function Home() {
       </header>
 
       <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Network Health Bar */}
-        <NetworkHealth activeNodes={activePNodes} totalNodes={nodes.length} />
+        {/* Top Section: Stats & Health */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Stats Grid (2/3 width) */}
+          <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4 h-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
+              <StatCard 
+                title="Network Capacity" 
+                value={`${(networkCapacity / 1000).toFixed(1)} PB`} 
+                trend="Theoretical" 
+                trendUp={true}
+                icon={<Database className="w-8 h-8" />}
+                color="purple"
+              />
+              <StatCard 
+                title="Storage Used" 
+                value={`${(totalStorageUsed / 1000).toFixed(2)} PB`} 
+                trend="+8.2%" 
+                trendUp={true}
+                icon={<Database className="w-8 h-8" />}
+                color="blue"
+              />
+              <StatCard 
+                title="Active pNodes" 
+                value={activePNodes} 
+                trend="+3" 
+                trendUp={true}
+                icon={<Server className="w-8 h-8" />}
+                color="teal"
+              />
+              <StatCard 
+                title="STOINC Generated" 
+                value={`$${(totalStoincGenerated / 1000).toFixed(1)}K`} 
+                trend="+15.3%" 
+                trendUp={true}
+                icon={<Activity className="w-8 h-8" />}
+                color="orange"
+              />
+              <StatCard 
+                title="pNode Distribution" 
+                value={`${uniqueCountries} Countries`} 
+                icon={<Globe className="w-8 h-8" />}
+                color="purple"
+              />
+            </div>
+          </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard 
-            title="Network Capacity" 
-            value={`${(networkCapacity / 1000).toFixed(1)} PB`} 
-            trend="Theoretical" 
-            trendUp={true}
-            icon={<Database className="w-5 h-5" />}
-          />
-          <StatCard 
-            title="Storage Used" 
-            value={`${(totalStorageUsed / 1000).toFixed(2)} PB`} 
-            trend="+8.2%" 
-            trendUp={true}
-            icon={<Database className="w-5 h-5" />}
-          />
-          <StatCard 
-            title="Active pNodes" 
-            value={activePNodes} 
-            trend="+3" 
-            trendUp={true}
-            icon={<Server className="w-5 h-5" />}
-          />
-          <StatCard 
-            title="STOINC Generated" 
-            value={`$${(totalStoincGenerated / 1000).toFixed(1)}K`} 
-            trend="+15.3%" 
-            trendUp={true}
-            icon={<Activity className="w-5 h-5" />}
-          />
-          <StatCard 
-            title="pNode Distribution" 
-            value={`${uniqueCountries} Countries`} 
-            icon={<Globe className="w-5 h-5" />}
-          />
+          {/* Right Column: Network Health (1/3 width) */}
+          <div className="lg:col-span-1 h-full">
+            <NetworkHealth activeNodes={activePNodes} totalNodes={nodes.length} />
+          </div>
         </div>
 
         {/* 7-Day Uptime Chart */}

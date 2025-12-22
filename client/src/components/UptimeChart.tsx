@@ -7,9 +7,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  defs,
-  linearGradient,
-  stop,
 } from "recharts";
 
 interface UptimeChartProps {
@@ -23,30 +20,30 @@ export function UptimeChart({ data }: UptimeChartProps) {
         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="uptimeGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0.01} />
+              <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.01} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="day"
-            stroke="rgba(148, 163, 184, 0.5)"
+            stroke="hsl(var(--muted-foreground))"
             style={{ fontSize: "12px" }}
           />
           <YAxis
-            stroke="rgba(148, 163, 184, 0.5)"
+            stroke="hsl(var(--muted-foreground))"
             domain={[95, 100]}
             style={{ fontSize: "12px" }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "rgba(30, 41, 59, 0.8)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              backgroundColor: "hsl(var(--popover))",
+              border: "1px solid hsl(var(--border))",
               borderRadius: "8px",
-              color: "#e2e8f0",
+              color: "hsl(var(--popover-foreground))",
             }}
             formatter={(value) => `${(value as number).toFixed(2)}%`}
-            labelStyle={{ color: "#94a3b8" }}
+            labelStyle={{ color: "hsl(var(--muted-foreground))" }}
           />
           <Area
             type="monotone"

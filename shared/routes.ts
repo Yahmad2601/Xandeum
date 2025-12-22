@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { insertNodeSchema, nodes } from './schema';
 
+export type CreateNodeRequest = z.infer<typeof insertNodeSchema>;
+
 export const errorSchemas = {
   validation: z.object({
     message: z.string(),
@@ -40,6 +42,54 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    // Uptime statistics for a specific node
+    uptimeStats: {
+      method: 'GET' as const,
+      path: '/api/nodes/:pubkey/uptime',
+      responses: {
+        200: z.object({
+          pubkey: z.string(),
+          uptimePercentage: z.number(),
+          totalChecks: z.number(),
+          activeChecks: z.number(),
+          offlineChecks: z.number(),
+          firstSeen: z.date(),
+          lastSeen: z.date(),
+        }),
+        404: errorSchemas.notFound,
+      },
+    },
+    // Trend data for charts (hourly, daily, weekly)
+    trends: {
+      method: 'GET' as const,
+      path: '/api/nodes/:pubkey/trends',
+      responses: {
+        200: z.object({
+          pubkey: z.string(),
+          hourlyUptime: z.array(z.number()),
+          dailyUptime: z.array(z.number()),
+          weeklyUptime: z.array(z.number()),
+        }),
+        404: errorSchemas.notFound,
+      },
+    },
+    // Recent snapshots (historical heartbeat data)
+    snapshots: {
+      method: 'GET' as const,
+      path: '/api/nodes/:pubkey/snapshots',
+      responses: {
+        200: z.array(z.object({
+          id: z.number(),
+          pubkey: z.string(),
+          status: z.enum(['active', 'offline']),
+          ip: z.string().nullable(),
+          version: z.string().nullable(),
+          totalStorage: z.number().nullable(),
+          stoincEarnings: z.number().nullable(),
+          timestamp: z.date(),
+        })),
+      },
+    },
     // This is the "crawler" trigger endpoint
     refresh: {
       method: 'POST' as const,
@@ -48,6 +98,19 @@ export const api = {
         200: z.object({ message: z.string(), count: z.number() }),
       },
     }
+  },
+  crawler: {
+    status: {
+      method: 'GET' as const,
+      path: '/api/crawler/status',
+      responses: {
+        200: z.object({
+          isRunning: z.boolean(),
+          crawlCount: z.number(),
+          uptime: z.string(),
+        }),
+      },
+    },
   },
 };
 

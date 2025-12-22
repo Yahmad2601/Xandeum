@@ -62,22 +62,22 @@ const formatTimeAgo = (date: Date): string => {
 const getEventIcon = (type: ActivityEvent["type"]) => {
   switch (type) {
     case "credits":
-      return <TrendingUp className="w-4 h-4 text-emerald-500" />;
+      return <TrendingUp className="w-4 h-4 text-x-teal" />;
     case "version-update":
-      return <Package className="w-4 h-4 text-blue-500" />;
+      return <Package className="w-4 h-4 text-x-purple" />;
     case "status-change":
-      return <AlertCircle className="w-4 h-4 text-amber-500" />;
+      return <AlertCircle className="w-4 h-4 text-x-orange" />;
   }
 };
 
 const getEventColor = (type: ActivityEvent["type"]) => {
   switch (type) {
     case "credits":
-      return "bg-emerald-500/10 border-emerald-500/20";
+      return "bg-x-teal/10 border-x-teal/20";
     case "version-update":
-      return "bg-blue-500/10 border-blue-500/20";
+      return "bg-x-purple/10 border-x-purple/20";
     case "status-change":
-      return "bg-amber-500/10 border-amber-500/20";
+      return "bg-x-orange/10 border-x-orange/20";
   }
 };
 
@@ -97,7 +97,7 @@ export function ActivityFeed() {
             key={event.id}
             className={`p-4 rounded-lg border transition-colors ${getEventColor(
               event.type
-            )} hover:bg-white/5 cursor-default`}
+            )} hover:bg-muted cursor-default`}
             data-testid={`activity-event-${index}`}
           >
             <div className="flex items-start gap-3">

@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
+import { crawler } from "./crawler";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { InsertNode } from "@shared/schema";
@@ -60,6 +61,10 @@ export async function registerRoutes(
   // Initial seed
   await seedDatabase();
 
+  // Start the crawler service
+  crawler.start();
+
+  // ===== NODE ENDPOINTS =====
   app.get(api.nodes.list.path, async (req, res) => {
     const nodes = await storage.getNodes();
     res.json(nodes);
@@ -89,18 +94,63 @@ export async function registerRoutes(
     }
   });
 
-  // Crawler / Refresh Endpoint
+  // ===== HISTORICAL DATA ENDPOINTS =====
+  
+  // Get uptime statistics for a node
+  app.get(api.nodes.uptimeStats.path, async (req, res) => {
+    const { pubkey } = req.params;
+    const hours = parseInt(req.query.hours as string) || 168; // Default 7 days
+    
+    const stats = await storage.calculateUptimeStats(pubkey, hours);
+    if (!stats) {
+      return res.status(404).json({ message: 'No data found for this node' });
+    }
+    
+    res.json(stats);
+  });
+
+  // Get trend data for charts
+  app.get(api.nodes.trends.path, async (req, res) => {
+    const { pubkey } = req.params;
+    
+    const trends = await storage.calculateNodeTrends(pubkey);
+    if (!trends) {
+      return res.status(404).json({ message: 'No trend data found for this node' });
+    }
+    
+    res.json(trends);
+  });
+
+  // Get recent snapshots (heartbeat data)
+  app.get(api.nodes.snapshots.path, async (req, res) => {
+    const { pubkey } = req.params;
+    const limit = parseInt(req.query.limit as string) || 100;
+    
+    const snapshots = await storage.getRecentSnapshots(pubkey, limit);
+    res.json(snapshots);
+  });
+
+  // ===== CRAWLER ENDPOINTS =====
+  
+  // Manual crawler trigger
   app.post(api.nodes.refresh.path, async (req, res) => {
-    // In a real app, this would fetch from Xandeum pRPC
-    // Here we regenerate random data to simulate "live" updates
-    const mockNodes = generateMockNodes(50);
-    
-    // In a real crawl, we'd update existing records by pubkey. 
-    // Our storage.updateNodes implementation handles upsert-like behavior.
-    await storage.updateNodes(mockNodes);
-    
-    res.json({ message: "Refreshed 50 nodes", count: 50 });
+    try {
+      const result = await crawler.triggerCrawl();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Crawler failed', 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      });
+    }
+  });
+
+  // Crawler status
+  app.get(api.crawler.status.path, async (req, res) => {
+    const status = crawler.getStatus();
+    res.json(status);
   });
 
   return httpServer;
 }
+

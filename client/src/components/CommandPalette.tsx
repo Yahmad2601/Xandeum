@@ -26,13 +26,13 @@ export function CommandPalette({ open, setOpen, nodes }: CommandPaletteProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center pt-24" onClick={() => setOpen(false)}>
+    <div className="fixed inset-0 z-50 bg-background/95 flex items-start justify-center pt-24" onClick={() => setOpen(false)}>
       <div 
-        className="w-full max-w-lg bg-card border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-lg bg-card border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <Command className="bg-transparent" loop>
-          <div className="flex items-center border-b border-white/5 px-3">
+          <div className="flex items-center border-b border-border px-3">
             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <Command.Input 
               className="flex h-12 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"

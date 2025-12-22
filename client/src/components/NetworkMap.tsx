@@ -39,8 +39,8 @@ export function NetworkMap({ nodes }: NetworkMapProps) {
     .range([4, 15]);
 
   return (
-    <div className="w-full h-[400px] bg-card/30 rounded-2xl border border-white/5 overflow-hidden shadow-inner relative">
-      <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-black/40 backdrop-blur-md rounded-full text-xs font-mono text-muted-foreground border border-white/10">
+    <div className="w-full h-[400px] bg-card rounded-2xl border border-border overflow-hidden shadow-inner relative">
+      <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-card rounded-full text-xs font-mono text-muted-foreground border border-border shadow-sm">
         LIVE NETWORK STATUS
       </div>
       
@@ -57,13 +57,13 @@ export function NetworkMap({ nodes }: NetworkMapProps) {
               <Geography
                 key={geo.rsmKey}
                 geography={geo}
-                fill="#1e293b"
-                stroke="#0f172a"
+                fill="hsl(var(--muted))"
+                stroke="hsl(var(--border))"
                 strokeWidth={0.5}
                 style={{
-                  default: { fill: "#1e293b", outline: "none" },
-                  hover: { fill: "#334155", outline: "none" },
-                  pressed: { fill: "#334155", outline: "none" },
+                  default: { fill: "hsl(var(--muted))", outline: "none" },
+                  hover: { fill: "hsl(var(--accent))", outline: "none" },
+                  pressed: { fill: "hsl(var(--accent))", outline: "none" },
                 }}
               />
             ))
@@ -77,8 +77,8 @@ export function NetworkMap({ nodes }: NetworkMapProps) {
           
           return (
             <Marker key={country} coordinates={coords}>
-              <circle r={sizeScale(count)} fill="rgba(59, 130, 246, 0.5)" />
-              <circle r={sizeScale(count) * 0.6} fill="#3b82f6" />
+              <circle r={sizeScale(count)} fill="rgba(20, 184, 166, 0.5)" />
+              <circle r={sizeScale(count) * 0.6} fill="#14b8a6" />
               <text
                 textAnchor="middle"
                 y={sizeScale(count) + 12}

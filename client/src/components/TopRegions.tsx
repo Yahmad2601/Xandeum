@@ -31,11 +31,11 @@ export function TopRegions({ nodes }: TopRegionsProps) {
 
   const getRegionColor = (index: number) => {
     const colors = [
-      "bg-emerald-500",
-      "bg-blue-500",
-      "bg-amber-500",
-      "bg-rose-500",
-      "bg-purple-500",
+      "bg-x-teal",
+      "bg-x-purple",
+      "bg-x-orange",
+      "bg-primary",
+      "bg-x-teal",
     ];
     return colors[index % colors.length];
   };
@@ -56,7 +56,7 @@ export function TopRegions({ nodes }: TopRegionsProps) {
                 {region.percentage.toFixed(1)}%
               </span>
             </div>
-            <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
               <div
                 className={`h-full ${getRegionColor(index)} transition-all duration-500`}
                 style={{ width: `${region.percentage}%` }}

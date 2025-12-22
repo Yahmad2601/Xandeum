@@ -49,8 +49,10 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
           foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
-          border: "var(--destructive-border)",
         },
+        "x-teal": "hsl(var(--x-teal) / <alpha-value>)",
+        "x-orange": "hsl(var(--x-orange) / <alpha-value>)",
+        "x-purple": "hsl(var(--x-purple) / <alpha-value>)",
         ring: "hsl(var(--ring) / <alpha-value>)",
         chart: {
           "1": "hsl(var(--chart-1) / <alpha-value>)",

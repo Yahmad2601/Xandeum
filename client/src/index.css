@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,39 +8,177 @@
   --font-display: 'Plus Jakarta Sans', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+  --radius: 0.75rem;
+}
 
-  /* Deep, data-rich dark theme by default */
-  --background: 224 71% 4%;
-  --foreground: 213 31% 91%;
+/* Default (Dark) */
+:root {
+  /* Dark Theme - Inspired by Business Dashboard */
+  --background: 222 47% 11%; /* #0f172a - Slate 900 */
+  --foreground: 210 40% 98%; /* #f8fafc - Slate 50 */
 
-  --card: 224 71% 6%;
-  --card-foreground: 213 31% 91%;
+  --card: 217 33% 17%; /* #1e293b - Slate 800 */
+  --card-foreground: 210 40% 98%;
 
-  --popover: 224 71% 4%;
-  --popover-foreground: 215 20.2% 65.1%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 210 40% 98%;
 
-  /* Vibrant primary brand color - Electric Blue */
-  --primary: 217 91% 60%;
-  --primary-foreground: 210 40% 98%;
+  --primary: 217 91% 60%; /* Electric Blue */
+  --primary-foreground: 222 47% 11%;
 
-  --secondary: 222 47% 11%;
+  --secondary: 215 28% 27%; /* Slate 700 */
   --secondary-foreground: 210 40% 98%;
 
-  --muted: 223 47% 11%;
+  --muted: 215 28% 27%;
   --muted-foreground: 215 20.2% 65.1%;
 
-  /* Accent for success/active states */
-  --accent: 150 100% 40%;
+  --accent: 215 28% 27%;
   --accent-foreground: 210 40% 98%;
 
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 216 34% 17%;
-  --input: 216 34% 17%;
+  --border: 215 28% 27%;
+  --input: 215 28% 27%;
   --ring: 224 76% 48%;
 
-  --radius: 0.75rem;
+  /* Xandeum Brand Colors */
+  --x-teal: 173 80% 40%;
+  --x-orange: 35 90% 55%;
+  --x-purple: 280 60% 50%;
+}
+
+/* Light Theme */
+.light {
+  /* Light Theme - Grey Background, White Cards */
+  --background: 210 40% 96.1%; /* #f3f4f6 - Slate 100 */
+  --foreground: 222 47% 11%;   /* #0f172a - Slate 900 */
+
+  --card: 0 0% 100%;           /* White */
+  --card-foreground: 222 47% 11%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+
+  --primary: 217 91% 60%;
+  --primary-foreground: 210 40% 98%;
+
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222 47% 11%;
+
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222 47% 11%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 214.3 31.8% 91.4%; /* Slate 200 */
+  --input: 214.3 31.8% 91.4%;
+  --ring: 217 91% 60%;
+
+  /* Xandeum Brand Colors - Adjusted for Light Mode */
+  --x-teal: 173 80% 35%;
+  --x-orange: 35 90% 50%;
+  --x-purple: 280 60% 45%;
+}
+
+/* Dark High Contrast */
+.dark-high-contrast {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+
+  --card: 0 0% 0%;
+  --card-foreground: 0 0% 100%;
+
+  --popover: 0 0% 0%;
+  --popover-foreground: 0 0% 100%;
+
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 0%;
+
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 70%;
+
+  --accent: 0 0% 15%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 217 91% 60%;
+
+  --x-teal: 173 80% 50%;
+  --x-orange: 35 90% 60%;
+  --x-purple: 280 60% 60%;
+}
+
+/* Light High Contrast */
+.light-high-contrast {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+
+  --primary: 217 91% 60%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 90%;
+  --secondary-foreground: 0 0% 0%;
+
+  --muted: 0 0% 90%;
+  --muted-foreground: 0 0% 30%;
+
+  --accent: 0 0% 90%;
+  --accent-foreground: 0 0% 0%;
+
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 0%;
+  --input: 0 0% 0%;
+  --ring: 217 91% 60%;
+
+  --x-teal: 173 80% 30%;
+  --x-orange: 35 90% 45%;
+  --x-purple: 280 60% 40%;
+}
+
+/* Explicit Dark Class (same as root default) */
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 217 33% 17%;
+  --card-foreground: 210 40% 98%;
+  --popover: 217 33% 17%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 11%;
+  --secondary: 215 28% 27%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 215 28% 27%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 215 28% 27%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 215 28% 27%;
+  --input: 215 28% 27%;
+  --ring: 224 76% 48%;
+  --x-teal: 173 80% 40%;
+  --x-orange: 35 90% 55%;
+  --x-purple: 280 60% 50%;
 }
 
 @layer base {
@@ -51,7 +189,7 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    @apply font-bold tracking-tight text-white;
+    @apply font-bold tracking-tight text-foreground;
   }
 
   /* Custom Scrollbar */
@@ -75,15 +213,15 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-card/50 backdrop-blur-xl border border-white/5 shadow-xl;
+    @apply bg-card/50 backdrop-blur-xl border border-border shadow-xl;
   }
   
   .table-row-hover {
-    @apply transition-colors duration-200 hover:bg-white/5;
+    @apply transition-colors duration-200 hover:bg-muted/50;
   }
   
   .stat-card {
-    @apply relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-card to-card/50 p-6 shadow-2xl;
+    @apply relative overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm;
   }
 
   .glow-text {
@@ -91,12 +229,4 @@
   }
 }
 
-/* Animations */
-@keyframes pulse-ring {
-  0% { transform: scale(0.33); opacity: 1; }
-  80%, 100% { opacity: 0; }
-}
 
-.animate-pulse-ring {
-  animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-}

@@ -6,7 +6,7 @@ interface SparklineProps {
   height?: number;
 }
 
-export function Sparkline({ data, color = "#10b981", height = 30 }: SparklineProps) {
+export function Sparkline({ data, color = "#14b8a6", height = 30 }: SparklineProps) {
   // Format data for Recharts
   const chartData = data.map((val, i) => ({ i, val }));
 
