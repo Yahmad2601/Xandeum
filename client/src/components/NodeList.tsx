@@ -60,11 +60,9 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
 
   const activeCount = nodes.filter(n => n.status === "active").length;
 
-  // Mock data generators
-  const getShortId = (pubkey: string) => pubkey.substring(0, 4).toUpperCase(); // Mock short ID
-  const getLatency = () => Math.floor(Math.random() * 80) + 20;
-  const getUptimeString = () => `${Math.floor(Math.random() * 10)}d ${Math.floor(Math.random() * 24)}h ${Math.floor(Math.random() * 60)}m`;
-  const getXdnScore = (node: Node) => Math.floor(node.uptimeScore || 50);
+  // Helper functions
+  const getShortId = (pubkey: string) => pubkey.substring(0, 4).toUpperCase();
+  const getXdnScore = (node: Node) => Math.floor(node.uptimeScore || 0);
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
@@ -196,10 +194,10 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                         </Badge>
                       </td>
                       <td className="px-6 py-4 font-mono text-muted-foreground">
-                        {getUptimeString()}
+                        -
                       </td>
                       <td className="px-6 py-4 font-mono text-muted-foreground">
-                        {getLatency()}ms
+                        -
                       </td>
                       <td className="px-6 py-4">
                         <div className="w-32 space-y-1">
@@ -246,11 +244,11 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                 <div className="grid grid-cols-3 gap-4 py-2">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Uptime</p>
-                    <p className="font-mono text-sm">{getUptimeString()}</p>
+                    <p className="font-mono text-sm">-</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Latency</p>
-                    <p className="font-mono text-sm">{getLatency()}ms</p>
+                    <p className="font-mono text-sm">-</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">XDN Score</p>

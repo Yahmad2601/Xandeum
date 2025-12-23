@@ -56,7 +56,6 @@ export default function Home() {
   const activePNodes = nodes.filter(n => n.status === "active").length;
   const totalStoincGenerated = nodes.reduce((acc, node) => acc + node.stoincGenerated, 0);
   const uniqueCountries = new Set(nodes.map(n => n.country)).size;
-  const avgUptime = 99.8; // Mock value for now
 
   if (isLoading) {
     return (

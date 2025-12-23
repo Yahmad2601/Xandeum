@@ -14,39 +14,10 @@ export interface ActivityEvent {
   timestamp: Date;
 }
 
-const generateMockEvents = (): ActivityEvent[] => {
-  const nodeIds = ["node-001", "node-015", "node-042", "node-028", "node-037"];
-  const versions = ["1.2.3", "1.2.4", "1.3.0", "1.2.5"];
-  
-  const events: ActivityEvent[] = [];
-  const now = new Date();
-
-  // Generate mixed events
-  for (let i = 0; i < 8; i++) {
-    const nodeId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
-    const type = i % 2 === 0 ? "credits" : "version-update";
-    
-    if (type === "credits") {
-      events.push({
-        id: `event-${i}`,
-        type: "credits",
-        nodeId,
-        message: `${nodeId} earned ${(Math.random() * 500 + 100).toFixed(0)} STOINC credits`,
-        timestamp: new Date(now.getTime() - (i * 5 + Math.random() * 2) * 60000),
-      });
-    } else {
-      const newVersion = versions[Math.floor(Math.random() * versions.length)];
-      events.push({
-        id: `event-${i}`,
-        type: "version-update",
-        nodeId,
-        message: `${nodeId} updated to v${newVersion}`,
-        timestamp: new Date(now.getTime() - (i * 8 + Math.random() * 3) * 60000),
-      });
-    }
-  }
-
-  return events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+// Activity feed will be populated with real events from the database
+const getRecentEvents = (): ActivityEvent[] => {
+  // TODO: Fetch real events from API/database
+  return [];
 };
 
 const formatTimeAgo = (date: Date): string => {
@@ -82,7 +53,7 @@ const getEventColor = (type: ActivityEvent["type"]) => {
 };
 
 export function ActivityFeed() {
-  const events = generateMockEvents();
+  const events = getRecentEvents();
 
   return (
     <div className="h-full flex flex-col space-y-4">
