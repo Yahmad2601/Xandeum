@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "wouter";
 import { useNodes, useRefreshNodes, useCrawlerStatus } from "@/hooks/use-nodes";
 import { NetworkMap } from "@/components/NetworkMap";
+import { NodeList } from "@/components/NodeList";
 import { Sparkline } from "@/components/Sparkline";
 import { StatCard } from "@/components/StatCard";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -17,9 +18,6 @@ import {
   Database, 
   Globe, 
   Activity, 
-  Search, 
-  RefreshCw,
-  MoreHorizontal,
   Radio
 } from "lucide-react";
 import type { Node } from "@shared/schema";
@@ -97,6 +95,27 @@ export default function Home() {
               Xandeum<span className="text-primary">Scan</span>
             </h1>
           </div>
+
+          <nav className="hidden md:flex items-center gap-6">
+            <button 
+              onClick={() => document.getElementById('network-map')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Network Map
+            </button>
+            <button 
+              onClick={() => document.getElementById('uptime-trend')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Uptime Trend
+            </button>
+            <button 
+              onClick={() => document.getElementById('network-nodes')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Network Nodes
+            </button>
+          </nav>
           
           <div className="flex items-center gap-3">
             {/* Crawler Status Badge */}
@@ -115,30 +134,7 @@ export default function Home() {
               </Badge>
             )}
 
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="hidden md:flex bg-card border-border text-muted-foreground hover:text-foreground"
-              onClick={() => setSearchOpen(true)}
-            >
-              <Search className="w-4 h-4 mr-2" />
-              <span className="mr-4">Search nodes...</span>
-              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
-                <span className="text-xs">⌘</span>K
-              </kbd>
-            </Button>
-            
             <ThemeToggle />
-
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => refresh()}
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`} />
-            </Button>
           </div>
         </div>
       </header>
@@ -196,117 +192,74 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 7-Day Uptime Chart */}
-        <section className="space-y-4">
+        {/* Map & Activity Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6" id="network-map">
+          {/* Global Network Map (3/4 width) */}
+          <div className="lg:col-span-3 space-y-4">
+            <h2 className="text-lg font-semibold">Global Network Map</h2>
+            <div className="relative w-full">
+              <NetworkMap nodes={nodes} />
+              {/* Floating Top Regions Overlay - Moved to Right */}
+              <div className="absolute bottom-4 right-4 w-72 z-10 hidden md:block">
+                <div className="border border-border/50 bg-card/90 backdrop-blur-md p-4 shadow-xl">
+                  <TopRegions nodes={nodes} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Activity (1/4 width) */}
+          <div className="lg:col-span-1 space-y-4">
+            <h2 className="text-lg font-semibold">Live Activity</h2>
+            <div className="rounded-xl border border-white/5 bg-card/30 backdrop-blur-sm p-6 h-[500px] overflow-hidden">
+              <ActivityFeed />
+            </div>
+          </div>
+        </div>
+
+        {/* 7-Day Uptime Chart (Full Width) */}
+        <section className="space-y-4" id="uptime-trend">
           <h2 className="text-lg font-semibold">7-Day Uptime Trend</h2>
           <div className="rounded-xl border border-white/5 bg-card/30 backdrop-blur-sm p-6">
             <UptimeChart data={generateWeeklyChartData(nodes)} />
           </div>
         </section>
 
-        {/* Main Content Grid - Map/Table on left, Activity on right */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Map and Table */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Map Section */}
-            <section className="space-y-4">
-              <h2 className="text-lg font-semibold">Global Network Map</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2 glass-panel rounded-2xl p-1">
-                  <NetworkMap nodes={nodes} />
-                </div>
-                <div className="rounded-xl border border-white/5 bg-card/30 backdrop-blur-sm p-6 h-fit">
-                  <TopRegions nodes={nodes} />
-                </div>
-              </div>
-            </section>
+        {/* Nodes List */}
+        <section id="network-nodes">
+          <NodeList nodes={nodes} onRefresh={() => refresh()} isRefreshing={isRefreshing} />
+        </section>
+      </main>
 
-            {/* Nodes Table */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Network Nodes</h2>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Showing {nodes.length} nodes</span>
-                </div>
+      {/* Footer */}
+      <footer className="border-t border-border bg-background/50 backdrop-blur-lg mt-12">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center">
+                <Activity className="w-3 h-3 text-white" />
               </div>
+              <span className="font-display font-bold text-lg">Xandeum</span>
+            </div>
+            
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <a href="https://xandeum.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                Website
+              </a>
+              <a href="https://docs.xandeum.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                Documentation
+              </a>
+              <a href="https://discord.gg/xandeum" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                Discord
+              </a>
+            </div>
 
-              <div className="rounded-xl border border-white/5 overflow-hidden bg-card/30 backdrop-blur-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-white/5 bg-white/[0.02]">
-                        <th className="px-6 py-4 font-medium text-muted-foreground">pNode</th>
-                        <th className="px-6 py-4 font-medium text-muted-foreground">Status</th>
-                        <th className="px-6 py-4 font-medium text-muted-foreground">Location</th>
-                        <th className="px-6 py-4 font-medium text-muted-foreground text-right">Storage</th>
-                        <th className="px-6 py-4 font-medium text-muted-foreground text-right">Earnings</th>
-                        <th className="px-6 py-4 font-medium text-muted-foreground text-center">24h Uptime</th>
-                        <th className="px-6 py-4 text-right"></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {nodes.map((node) => (
-                        <tr key={node.id} className="group hover:bg-white/[0.02] transition-colors">
-                          <td className="px-6 py-4">
-                            <Link href={`/node/${node.pubkey}`} className="block">
-                              <div className="flex flex-col cursor-pointer">
-                                <span className="font-mono font-medium text-primary group-hover:underline decoration-primary/50 underline-offset-4 transition-all">
-                                  {node.pubkey.substring(0, 8)}...{node.pubkey.substring(node.pubkey.length - 4)}
-                                </span>
-                                <span className="text-xs text-muted-foreground mt-0.5">v{node.version}</span>
-                              </div>
-                            </Link>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-                              node.status === 'active' 
-                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
-                                : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                            }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                                node.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
-                              }`} />
-                              {node.status.toUpperCase()}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center text-muted-foreground">
-                              {node.country}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right font-mono">
-                            {(node.totalStorage / 1000).toFixed(2)} TB
-                          </td>
-                          <td className="px-6 py-4 text-right font-mono text-foreground">
-                            {node.stoincEarnings.toLocaleString(undefined, { minimumFractionDigits: 2 })} STO
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex justify-center">
-                              <Sparkline data={node.uptimeHistory || []} />
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <Link href={`/node/${node.pubkey}`} className="text-muted-foreground hover:text-foreground">
-                              <MoreHorizontal className="w-5 h-5 ml-auto" />
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          {/* Right Column - Activity Feed */}
-          <div className="lg:col-span-1">
-            <div className="rounded-xl border border-white/5 bg-card/30 backdrop-blur-sm p-6 h-fit">
-              <ActivityFeed />
+            <div className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Xandeum Labs. All rights reserved.
             </div>
           </div>
         </div>
-      </main>
+      </footer>
     </div>
   );
 }

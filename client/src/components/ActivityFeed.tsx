@@ -85,13 +85,13 @@ export function ActivityFeed() {
   const events = generateMockEvents();
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
+    <div className="h-full flex flex-col space-y-4">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <Clock className="w-5 h-5 text-muted-foreground" />
         <h2 className="text-lg font-semibold">Recent Activity</h2>
       </div>
 
-      <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-0">
         {events.map((event, index) => (
           <div
             key={event.id}
@@ -105,12 +105,14 @@ export function ActivityFeed() {
                 {getEventIcon(event.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground break-words">
-                  {event.message}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {formatTimeAgo(event.timestamp)}
-                </p>
+                <div className="flex justify-between items-start gap-2">
+                  <p className="text-sm font-medium text-foreground break-words">
+                    {event.message}
+                  </p>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">
+                    {formatTimeAgo(event.timestamp)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
