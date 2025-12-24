@@ -7,26 +7,46 @@ import axios from "axios";
  * Targets Xandeum pRPC on Port 6000
  */
 export class CrawlerService {
-  private intervalId: NodeJS.Timeout | null = null;
+  private timeoutId: NodeJS.Timeout | null = null;
   private isRunning = false;
   private crawlCount = 0;
+  private readonly CRAWL_INTERVAL_MS = 30000; // 30 seconds
 
   start() {
     if (this.isRunning) return;
     console.log("🚀 Starting Real Xandeum Crawler (30s heartbeat)...");
     this.isRunning = true;
-    this.crawl(); // Run immediately
-    this.intervalId = setInterval(() => this.crawl(), 30000);
+    this.scheduleCrawl(); // Start the recursive loop
   }
 
   stop() {
-    if (this.intervalId) clearInterval(this.intervalId);
+    if (this.timeoutId) clearTimeout(this.timeoutId);
     this.isRunning = false;
+    this.timeoutId = null;
     console.log("🛑 Crawler stopped");
   }
 
   async triggerCrawl() {
     return await this.crawl();
+  }
+
+  /**
+   * Recursive scheduling pattern - prevents overlapping crawls
+   * Only schedules next crawl AFTER current one completes
+   */
+  private scheduleCrawl() {
+    if (!this.isRunning) return;
+    
+    this.crawl()
+      .catch((error) => {
+        console.error("❌ Crawl Error:", error);
+      })
+      .finally(() => {
+        // Schedule next crawl only after this one finishes
+        if (this.isRunning) {
+          this.timeoutId = setTimeout(() => this.scheduleCrawl(), this.CRAWL_INTERVAL_MS);
+        }
+      });
   }
 
   private async crawl() {
@@ -142,10 +162,8 @@ export class CrawlerService {
             // Get country and city from batch results
             const geoInfo = geoData.get(podIp) || { country: "Unknown", city: "Unknown" };
           
-            // Calculate uptime percentage (uptime is in seconds)
-            // Assume 30-day max = 2,592,000 seconds
+            // Store raw uptime data (in seconds) - let storage layer calculate scores
             const uptimeSeconds = parseInt(pod.uptime || "0");
-            const uptimePercent = Math.min((uptimeSeconds / 2592000) * 100, 100);
             
             foundNodes.push({
               pubkey: pod.pubkey,
@@ -161,12 +179,13 @@ export class CrawlerService {
             networkCapacity: 200000,
             stoincGenerated: 0,
             
-            // Initialize with current uptime
-            uptimeHistory: Array(24).fill(uptimePercent),
-            weeklyUptimeHistory: Array(7).fill(uptimePercent),
+            // Initialize arrays - actual scores calculated by storage layer from snapshots
+            uptimeHistory: Array(24).fill(0),
+            weeklyUptimeHistory: Array(7).fill(0),
             lastUpdated: new Date().toISOString(),
             
-            uptimeScore: Math.round(uptimePercent),
+            // Let storage.updateUptimeScores() calculate this from historical snapshots
+            uptimeScore: 0,
             reliabilityRank: null,
           } as InsertNode);
           } catch (podErr: any) {

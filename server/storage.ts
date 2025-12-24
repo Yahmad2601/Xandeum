@@ -58,15 +58,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateNodes(nodesData: InsertNode[]): Promise<void> {
-    // Basic bulk upsert simulation for the crawler
-    for (const node of nodesData) {
-      const existing = await this.getNode(node.pubkey);
-      if (existing) {
-        await this.updateNode(node.pubkey, node);
-      } else {
-        await this.createNode(node);
-      }
-    }
+    if (nodesData.length === 0) return;
+    
+    // Bulk upsert using Drizzle's onConflictDoUpdate
+    // This is ~100x faster than individual queries
+    await db
+      .insert(nodes)
+      .values(nodesData as any)
+      .onConflictDoUpdate({
+        target: nodes.pubkey, // Conflict on pubkey (unique key)
+        set: {
+          ip: sql`EXCLUDED.ip`,
+          version: sql`EXCLUDED.version`,
+          country: sql`EXCLUDED.country`,
+          city: sql`EXCLUDED.city`,
+          status: sql`EXCLUDED.status`,
+          totalStorage: sql`EXCLUDED."totalStorage"`,
+          stoincEarnings: sql`EXCLUDED."stoincEarnings"`,
+          networkCapacity: sql`EXCLUDED."networkCapacity"`,
+          stoincGenerated: sql`EXCLUDED."stoincGenerated"`,
+          uptimeHistory: sql`EXCLUDED."uptimeHistory"`,
+          weeklyUptimeHistory: sql`EXCLUDED."weeklyUptimeHistory"`,
+          lastUpdated: sql`EXCLUDED."lastUpdated"`,
+          // Note: uptimeScore and reliabilityRank are managed by updateUptimeScores()
+        },
+      });
   }
 
   async countNodes(): Promise<number> {

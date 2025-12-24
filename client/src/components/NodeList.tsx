@@ -13,7 +13,8 @@ import {
   ChevronDown,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Download
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -69,6 +70,57 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
     return `${version.substring(0, 12)}...${version.substring(version.length - 6)}`;
   };
 
+  const exportToCSV = () => {
+    // CSV headers
+    const headers = [
+      'Node ID',
+      'Public Key',
+      'IP Address',
+      'Location',
+      'Status',
+      'Version',
+      'XDN Score',
+      'Uptime Score (%)',
+      'Storage (GB)',
+      'STOINC Earnings',
+      'Reliability Rank',
+      'Last Updated'
+    ];
+
+    // Convert nodes to CSV rows
+    const rows = filteredNodes.map(node => [
+      `Node ${node.ip}`,
+      node.pubkey,
+      node.ip,
+      `${node.city || 'Unknown'}, ${countryNames[node.country] || node.country || 'Unknown'}`,
+      node.status,
+      node.version,
+      getXdnScore(node),
+      node.uptimeScore || 0,
+      node.totalStorage,
+      node.stoincEarnings,
+      node.reliabilityRank || 'N/A',
+      new Date(node.lastUpdated).toISOString()
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `xandeum-nodes-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
       <div className="p-6 space-y-6">
@@ -96,6 +148,14 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
             <Button variant="outline" className="border-input bg-background/50 gap-2">
               <Filter className="w-4 h-4" />
               Filters
+            </Button>
+            <Button 
+              variant="outline" 
+              className="border-input bg-background/50 gap-2"
+              onClick={exportToCSV}
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
             </Button>
           </div>
         </div>
