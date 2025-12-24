@@ -63,6 +63,11 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
   // Helper functions
   const getShortId = (pubkey: string) => pubkey.substring(0, 4).toUpperCase();
   const getXdnScore = (node: Node) => Math.floor(node.uptimeScore || 0);
+  const truncateVersion = (version: string) => {
+    if (version.length <= 20) return version;
+    // Show first 12 chars and last 6 chars with ... in between
+    return `${version.substring(0, 12)}...${version.substring(version.length - 6)}`;
+  };
 
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
@@ -182,7 +187,7 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-muted-foreground max-w-[200px] truncate">
-                        {countryNames[node.country] || node.country || "-,-,-"}
+                        {node.city || "Unknown"}, {countryNames[node.country] || node.country || "Unknown"}
                       </td>
                       <td className="px-6 py-4">
                         <Badge variant="outline" className={`
@@ -211,7 +216,7 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                         {formatDistanceToNow(new Date(node.lastUpdated), { addSuffix: true })}
                       </td>
                       <td className="px-6 py-4 text-muted-foreground font-mono text-sm">
-                        {node.version}
+                        {truncateVersion(node.version)}
                       </td>
                     </tr>
                   ))}
@@ -230,7 +235,7 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium text-lg">Node {node.ip} ({getShortId(node.pubkey)})</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{node.country || "-,-,-"}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{node.city || "Unknown"}, {countryNames[node.country] || node.country || "Unknown"}</p>
                   </div>
                   <Badge variant="outline" className={`
                     ${node.status === 'active' 
@@ -282,22 +287,28 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
         )}
 
         {/* Pagination */}
-        <div className="flex items-center justify-between pt-4 border-t border-border">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Show on page</span>
-            <Select defaultValue="15">
-              <SelectTrigger className="w-[70px] h-8">
-                <SelectValue placeholder="15" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="15">15</SelectItem>
-                <SelectItem value="30">30</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <Select defaultValue="15">
+                <SelectTrigger className="w-[70px] h-8">
+                  <SelectValue placeholder="15" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15">15</SelectItem>
+                  <SelectItem value="30">30</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <span className="text-sm text-muted-foreground">
+              {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredNodes.length)} of {filteredNodes.length}
+            </span>
           </div>
 
           <div className="flex items-center gap-1">
+            {/* Previous Button */}
             <Button
               variant="ghost"
               size="icon"
@@ -308,31 +319,44 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              // Simple pagination logic for demo - shows first 5 pages or window around current
-              let pageNum = i + 1;
-              if (totalPages > 5 && currentPage > 3) {
-                pageNum = currentPage - 2 + i;
-              }
-              if (pageNum > totalPages) return null;
+            {(() => {
+              const pages: number[] = [];
+              const maxVisible = 5;
               
-              return (
+              if (totalPages <= maxVisible) {
+                // Show all pages
+                for (let i = 1; i <= totalPages; i++) {
+                  pages.push(i);
+                }
+              } else {
+                // Show current page in center with 2 on each side
+                let start = Math.max(1, currentPage - 2);
+                let end = Math.min(totalPages, start + maxVisible - 1);
+                
+                // Adjust if we're near the end
+                if (end === totalPages) {
+                  start = Math.max(1, end - maxVisible + 1);
+                }
+                
+                for (let i = start; i <= end; i++) {
+                  pages.push(i);
+                }
+              }
+              
+              return pages.map((pageNum) => (
                 <Button
                   key={pageNum}
-                  variant={currentPage === pageNum ? "secondary" : "ghost"}
+                  variant={currentPage === pageNum ? "default" : "ghost"}
                   size="sm"
-                  className={`h-8 w-8 ${currentPage === pageNum ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}`}
+                  className="h-8 w-8"
                   onClick={() => setCurrentPage(pageNum)}
                 >
                   {pageNum}
                 </Button>
-              );
-            })}
-            
-            {totalPages > 5 && currentPage < totalPages - 2 && (
-              <span className="px-2 text-muted-foreground">...</span>
-            )}
+              ));
+            })()}
 
+            {/* Next Button */}
             <Button
               variant="ghost"
               size="icon"

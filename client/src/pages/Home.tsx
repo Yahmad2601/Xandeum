@@ -56,6 +56,12 @@ export default function Home() {
   const activePNodes = nodes.filter(n => n.status === "active").length;
   const totalStoincGenerated = nodes.reduce((acc, node) => acc + node.stoincGenerated, 0);
   const uniqueCountries = new Set(nodes.map(n => n.country)).size;
+  // Count unique cities (format: "CountryCode-CityName" to handle same city names in different countries)
+  const uniqueCities = new Set(
+    nodes
+      .filter(n => n.city) // Include all cities, even Unknown (it will update as GeoIP loads)
+      .map(n => `${n.country}-${n.city}`)
+  ).size;
 
   if (isLoading) {
     return (
@@ -179,6 +185,7 @@ export default function Home() {
               <StatCard 
                 title="pNode Distribution" 
                 value={`${uniqueCountries} Countries`} 
+                trend={`${uniqueCities} Cities`}
                 icon={<Globe className="w-8 h-8" />}
                 color="purple"
               />

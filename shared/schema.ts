@@ -8,6 +8,7 @@ export const nodes = pgTable("nodes", {
   ip: text("ip").notNull(),
   version: text("version").notNull(),
   country: text("country").notNull(),
+  city: text("city").default("Unknown"), // City where node is located
   status: text("status", { enum: ["active", "offline"] }).notNull(),
   totalStorage: doublePrecision("total_storage").notNull(),
   stoincEarnings: doublePrecision("stoinc_earnings").notNull(),
