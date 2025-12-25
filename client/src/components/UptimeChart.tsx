@@ -32,7 +32,7 @@ export function UptimeChart({ data }: UptimeChartProps) {
           />
           <YAxis
             stroke="hsl(var(--muted-foreground))"
-            domain={[95, 100]}
+            domain={[0, 100]}
             style={{ fontSize: "12px" }}
           />
           <Tooltip

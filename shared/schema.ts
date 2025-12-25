@@ -10,7 +10,10 @@ export const nodes = pgTable("nodes", {
   country: text("country").notNull(),
   city: text("city").default("Unknown"), // City where node is located
   status: text("status", { enum: ["active", "offline"] }).notNull(),
-  totalStorage: doublePrecision("total_storage").notNull(),
+  isPublic: boolean("is_public").notNull().default(true), // Whether node is publicly accessible
+  uptime: integer("uptime").notNull().default(0), // Process uptime in seconds (how long node has been running)
+  totalStorage: doublePrecision("total_storage").notNull(), // Storage committed (capacity) in GB
+  storageUsed: doublePrecision("storage_used").notNull().default(0), // Actual storage used in MB
   stoincEarnings: doublePrecision("stoinc_earnings").notNull(),
   networkCapacity: doublePrecision("network_capacity").notNull().default(200000), // Default 200 PB
   stoincGenerated: doublePrecision("stoinc_generated").notNull().default(0), // Cumulative STOINC rewards
@@ -30,6 +33,7 @@ export const nodeSnapshots = pgTable("node_snapshots", {
   ip: text("ip"),
   version: text("version"),
   totalStorage: doublePrecision("total_storage"),
+  storageUsed: doublePrecision("storage_used"),
   stoincEarnings: doublePrecision("stoinc_earnings"),
   timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
@@ -37,13 +41,29 @@ export const nodeSnapshots = pgTable("node_snapshots", {
   timestampIdx: index("snapshots_timestamp_idx").on(table.timestamp),
 }));
 
+// Activity events - Records key network events for the activity feed
+export const activities = pgTable("activities", {
+  id: serial("id").primaryKey(),
+  type: text("type", { enum: ["earnings", "status-change", "upgrade", "storage-commit", "new-node"] }).notNull(),
+  nodeId: text("node_id"), // Optional - some events like storage-commit are network-wide
+  message: text("message").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // Additional data (e.g., earnings amount, version numbers)
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  timestampIdx: index("activities_timestamp_idx").on(table.timestamp),
+  typeIdx: index("activities_type_idx").on(table.type),
+}));
+
 export const insertNodeSchema = createInsertSchema(nodes).omit({ id: true });
 export const insertSnapshotSchema = createInsertSchema(nodeSnapshots).omit({ id: true, timestamp: true });
+export const insertActivitySchema = createInsertSchema(activities).omit({ id: true, timestamp: true });
 
 export type Node = typeof nodes.$inferSelect;
 export type InsertNode = z.infer<typeof insertNodeSchema>;
 export type NodeSnapshot = typeof nodeSnapshots.$inferSelect;
 export type InsertNodeSnapshot = z.infer<typeof insertSnapshotSchema>;
+export type Activity = typeof activities.$inferSelect;
+export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
 // Request types
 export type CreateNodeRequest = InsertNode;

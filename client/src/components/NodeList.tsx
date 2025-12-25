@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import { Node } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
+
+function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / (3600 * 24));
+  const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
@@ -34,6 +44,13 @@ const countryNames: Record<string, string> = {
   "FR": "France",
   "NL": "Netherlands",
   "IE": "Ireland",
+  "SE": "Sweden",
+  "CH": "Switzerland",
+  "FI": "Finland",
+  "ES": "Spain",
+  "RO": "Romania",
+  "NZ": "New Zealand",
+  "NG": "Nigeria",
 };
 
 interface NodeListProps {
@@ -59,11 +76,10 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedNodes = filteredNodes.slice(startIndex, startIndex + itemsPerPage);
 
-  const activeCount = nodes.filter(n => n.status === "active").length;
+  const activeCount = nodes.filter(n => n.status === "online").length;
 
   // Helper functions
   const getShortId = (pubkey: string) => pubkey.substring(0, 4).toUpperCase();
-  const getXdnScore = (node: Node) => Math.floor(node.uptimeScore || 0);
   const truncateVersion = (version: string) => {
     if (version.length <= 20) return version;
     // Show first 12 chars and last 6 chars with ... in between
@@ -218,7 +234,6 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                     <th className="px-6 py-4 font-medium text-muted-foreground">Location</th>
                     <th className="px-6 py-4 font-medium text-muted-foreground">Status</th>
                     <th className="px-6 py-4 font-medium text-muted-foreground">Uptime</th>
-                    <th className="px-6 py-4 font-medium text-muted-foreground">Latency</th>
                     <th className="px-6 py-4 font-medium text-muted-foreground">Storage <span className="text-xs bg-muted px-1 rounded ml-1">TB</span></th>
                     <th className="px-6 py-4 font-medium text-muted-foreground">Last Seen</th>
                     <th className="px-6 py-4 font-medium text-muted-foreground">Version</th>
@@ -236,14 +251,13 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                           <span className="font-medium text-foreground">
                             Node {node.ip} ({getShortId(node.pubkey)})
                           </span>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30 border-0 text-[10px] px-1.5 py-0 h-5 rounded">
-                              Registered
-                            </Badge>
-                            <Badge variant="secondary" className="bg-[#0ea5e9]/20 text-[#0ea5e9] hover:bg-[#0ea5e9]/30 border-0 text-[10px] px-1.5 py-0 h-5 rounded">
-                              XDN: {getXdnScore(node)}
-                            </Badge>
-                          </div>
+                          <Badge variant="secondary" className={`${
+                            node.isPublic 
+                              ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30' 
+                              : 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30'
+                          } border-0 text-[10px] px-1.5 py-0 h-5 rounded w-fit`}>
+                            {node.isPublic ? 'Public' : 'Private'}
+                          </Badge>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-muted-foreground max-w-[200px] truncate">
@@ -251,25 +265,36 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                       </td>
                       <td className="px-6 py-4">
                         <Badge variant="outline" className={`
-                          ${node.status === 'active' 
+                          ${node.status === 'online' 
                             ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
                             : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}
                         `}>
-                          {node.status === 'active' ? 'Active' : 'Offline'}
+                          {node.status === 'online' ? 'Online' : 'Offline'}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 font-mono text-muted-foreground">
-                        -
-                      </td>
-                      <td className="px-6 py-4 font-mono text-muted-foreground">
-                        -
+                        {formatUptime(node.uptime || 0)}
                       </td>
                       <td className="px-6 py-4">
                         <div className="w-32 space-y-1">
                           <div className="flex justify-between text-xs text-muted-foreground font-mono">
-                            <span>0.00 / {(node.totalStorage / 1000).toFixed(2)} TB</span>
+                            <span>
+                              {node.totalStorage === 0 ? (
+                                <span className="text-muted-foreground/50">No storage allocated</span>
+                              ) : (
+                                <>
+                                  {node.storageUsed && node.storageUsed >= 1024 
+                                    ? `${(node.storageUsed / 1024).toFixed(2)} GB` 
+                                    : `${(node.storageUsed || 0).toFixed(2)} MB`} / {node.totalStorage >= 1000 
+                                    ? `${(node.totalStorage / 1000).toFixed(2)} TB`
+                                    : node.totalStorage >= 1
+                                    ? `${node.totalStorage.toFixed(0)} GB`
+                                    : `${(node.totalStorage * 1024).toFixed(0)} MB`}
+                                </>
+                              )}
+                            </span>
                           </div>
-                          <Progress value={Math.random() * 10} className="h-1 bg-muted" />
+                          <Progress value={node.storageUsed && node.totalStorage ? (node.storageUsed / 1024 / node.totalStorage) * 100 : 0} className="h-1 bg-muted" />
                         </div>
                       </td>
                       <td className="px-6 py-4 text-muted-foreground text-xs">
@@ -295,50 +320,53 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium text-lg">Node {node.ip} ({getShortId(node.pubkey)})</h3>
+                    <p className="text-xs text-muted-foreground font-mono mt-0.5">{node.pubkey}</p>
                     <p className="text-sm text-muted-foreground mt-1">{node.city || "Unknown"}, {countryNames[node.country] || node.country || "Unknown"}</p>
                   </div>
                   <Badge variant="outline" className={`
-                    ${node.status === 'active' 
+                    ${node.status === 'online' 
                       ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
                       : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}
                   `}>
-                    {node.status === 'active' ? 'Active' : 'Offline'}
+                    {node.status === 'online' ? 'Online' : 'Offline'}
                   </Badge>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 py-2">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Uptime</p>
-                    <p className="font-mono text-sm">-</p>
+                    <p className="font-mono text-sm">{formatUptime(node.uptime || 0)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Latency</p>
-                    <p className="font-mono text-sm">-</p>
+                    <p className="text-xs text-muted-foreground mb-1">Storage Used</p>
+                    <p className={`font-mono text-sm ${node.totalStorage === 0 ? 'text-muted-foreground/50' : ''}`}>
+                      {node.totalStorage === 0 
+                        ? 'No storage' 
+                        : node.storageUsed 
+                        ? `${node.storageUsed.toFixed(2)} MB` 
+                        : '0 MB'}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">XDN Score</p>
-                    <p className="font-mono text-sm">{getXdnScore(node)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">CPU</p>
-                    <p className="font-mono text-sm">0.0%</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Memory</p>
-                    <p className="font-mono text-sm">-</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Storage</p>
-                    <div className="flex items-center gap-1">
-                      <p className="font-mono text-sm">0.00 TB</p>
-                      <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                    </div>
+                    <p className="text-xs text-muted-foreground mb-1">Total Storage</p>
+                    <p className={`font-mono text-sm ${node.totalStorage === 0 ? 'text-muted-foreground/50' : ''}`}>
+                      {node.totalStorage === 0 
+                        ? 'No storage' 
+                        : node.totalStorage >= 1 
+                        ? `${node.totalStorage} GB` 
+                        : `${(node.totalStorage * 1024).toFixed(0)} MB`}
+                    </p>
                   </div>
                 </div>
 
+
                 <div className="pt-2 border-t border-border/50">
-                  <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30 border-0 text-xs rounded">
-                    Registered
+                  <Badge variant="secondary" className={`${
+                    node.isPublic 
+                      ? 'bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30' 
+                      : 'bg-amber-500/20 text-amber-500 hover:bg-amber-500/30'
+                  } border-0 text-xs rounded w-fit`}>
+                    {node.isPublic ? 'Public' : 'Private'}
                   </Badge>
                 </div>
               </div>

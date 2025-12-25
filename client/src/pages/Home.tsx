@@ -18,7 +18,8 @@ import {
   Database, 
   Globe, 
   Activity, 
-  Radio
+  Radio,
+  Eye
 } from "lucide-react";
 import type { Node } from "@shared/schema";
 
@@ -28,7 +29,10 @@ function generateWeeklyChartData(nodes: Node[]) {
   const weeklyData = Array.from({ length: 7 }).map(() => 0);
   const counts = Array.from({ length: 7 }).map(() => 0);
   
-  nodes.forEach((node) => {
+  // Only count online nodes for realistic uptime calculation
+  const activeNodes = nodes.filter(n => n.status === "online");
+  
+  activeNodes.forEach((node) => {
     const history = node.weeklyUptimeHistory || [];
     history.forEach((uptime, idx) => {
       if (idx < 7) {
@@ -40,7 +44,8 @@ function generateWeeklyChartData(nodes: Node[]) {
 
   return dayLabels.map((day, idx) => ({
     day,
-    uptime: counts[idx] > 0 ? weeklyData[idx] / counts[idx] : 99.5,
+    // Calculate average uptime, fallback to 0 if no data
+    uptime: counts[idx] > 0 ? weeklyData[idx] / counts[idx] : 0,
   }));
 }
 
@@ -51,9 +56,13 @@ export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Derived stats
-  const totalStorageUsed = nodes.reduce((acc, node) => acc + node.totalStorage, 0);
-  const networkCapacity = nodes.length > 0 ? nodes[0].networkCapacity : 200000;
-  const activePNodes = nodes.filter(n => n.status === "active").length;
+  // Note: totalStorage is in GB, storageUsed is in MB (converted in crawler)
+  const totalStorageCommittedGB = nodes.reduce((acc, node) => acc + node.totalStorage, 0);
+  const totalStorageUsedGB = nodes.reduce((acc, node) => acc + (node.storageUsed || 0) / 1024, 0); // Convert MB to GB
+  const publicNodes = nodes.filter(n => n.isPublic === true).length;
+  const privateNodes = nodes.filter(n => n.isPublic === false).length;
+  const onlineNodes = nodes.filter(n => n.status === "online").length;
+  const totalNodes = nodes.length;
   const totalStoincGenerated = nodes.reduce((acc, node) => acc + node.stoincGenerated, 0);
   const uniqueCountries = new Set(nodes.map(n => n.country)).size;
   // Count unique cities (format: "CountryCode-CityName" to handle same city names in different countries)
@@ -62,6 +71,17 @@ export default function Home() {
       .filter(n => n.city) // Include all cities, even Unknown (it will update as GeoIP loads)
       .map(n => `${n.country}-${n.city}`)
   ).size;
+
+  // Helper function to format storage with appropriate units
+  const formatStorage = (gb: number) => {
+    if (gb < 1024) {
+      return `${gb.toFixed(2)} GB`;
+    } else if (gb < 1024 * 1024) {
+      return `${(gb / 1024).toFixed(2)} TB`;
+    } else {
+      return `${(gb / 1024 / 1024).toFixed(2)} PB`;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -151,33 +171,41 @@ export default function Home() {
           <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4 h-full">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
               <StatCard 
-                title="Network Capacity" 
-                value={`${(networkCapacity / 1000).toFixed(1)} PB`} 
-                trend="Theoretical" 
+                title="Node Visibility" 
+                value={`${publicNodes} / ${privateNodes}`} 
+                trend={`${publicNodes} public, ${privateNodes} private`}
                 trendUp={true}
-                icon={<Database className="w-8 h-8" />}
+                icon={<Eye className="w-8 h-8" />}
                 color="purple"
               />
               <StatCard 
-                title="Storage Used" 
-                value={`${(totalStorageUsed / 1000).toFixed(2)} PB`} 
-                trend="+8.2%" 
+                title="Storage Committed" 
+                value={formatStorage(totalStorageCommittedGB)} 
+                trend={`${formatStorage(totalStorageUsedGB)} used`}
                 trendUp={true}
                 icon={<Database className="w-8 h-8" />}
                 color="blue"
               />
               <StatCard 
-                title="Active pNodes" 
-                value={activePNodes} 
-                trend="+3" 
+                title="Total Nodes" 
+                value={totalNodes} 
+                trend="Unique nodes"
                 trendUp={true}
                 icon={<Server className="w-8 h-8" />}
                 color="teal"
               />
               <StatCard 
-                title="STOINC Generated" 
-                value={`$${(totalStoincGenerated / 1000).toFixed(1)}K`} 
-                trend="+15.3%" 
+                title="Online Nodes" 
+                value={onlineNodes} 
+                trend={`${totalNodes - onlineNodes} offline`}
+                trendUp={false}
+                icon={<Radio className="w-8 h-8" />}
+                color="green"
+              />
+              <StatCard 
+                title="Total STOINC Generated" 
+                value={`$${totalStoincGenerated.toLocaleString()}`}
+                trend="Network Rewards Distributed"
                 trendUp={true}
                 icon={<Activity className="w-8 h-8" />}
                 color="orange"
@@ -194,7 +222,7 @@ export default function Home() {
 
           {/* Right Column: Network Health (1/3 width) */}
           <div className="lg:col-span-1 h-full">
-            <NetworkHealth activeNodes={activePNodes} totalNodes={nodes.length} />
+            <NetworkHealth nodes={nodes} />
           </div>
         </div>
 

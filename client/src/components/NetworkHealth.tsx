@@ -1,13 +1,63 @@
 import React, { useEffect, useState } from "react";
 import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from "recharts";
 
-interface NetworkHealthProps {
-  activeNodes: number;
-  totalNodes: number;
+interface Node {
+  status: string;
+  uptimeScore: number;
+  version: string;
+  totalStorage: number;
+  storageUsed: number;
 }
 
-export function NetworkHealth({ activeNodes, totalNodes }: NetworkHealthProps) {
-  const targetHealth = totalNodes > 0 ? (activeNodes / totalNodes) * 100 : 0;
+interface NetworkHealthProps {
+  nodes: Node[];
+}
+
+export function NetworkHealth({ nodes }: NetworkHealthProps) {
+  // Calculate comprehensive network health score
+  const calculateHealthScore = () => {
+    if (nodes.length === 0) return 0;
+
+    // 1. Online percentage (40% weight) - ratio of active nodes
+    const activeNodes = nodes.filter(n => n.status === "online").length;
+    const onlineScore = (activeNodes / nodes.length) * 100;
+
+    // 2. Average uptime score (30% weight)
+    const avgUptimeScore = nodes.reduce((acc, node) => acc + (node.uptimeScore || 0), 0) / nodes.length;
+
+    // 3. Storage utilization (15% weight) - penalize if too low or too high
+    const totalStorageGB = nodes.reduce((acc, n) => acc + n.totalStorage, 0);
+    const usedStorageGB = nodes.reduce((acc, n) => acc + (n.storageUsed || 0) / 1024, 0);
+    const utilizationPercent = totalStorageGB > 0 ? (usedStorageGB / totalStorageGB) * 100 : 0;
+    // Ideal utilization: 20-80%, penalize if outside this range
+    let storageScore = 100;
+    if (utilizationPercent < 20) {
+      storageScore = (utilizationPercent / 20) * 100; // Scale 0-20% to 0-100%
+    } else if (utilizationPercent > 80) {
+      storageScore = ((100 - utilizationPercent) / 20) * 100; // Scale 80-100% to 100-0%
+    }
+
+    // 4. Version uniformity (15% weight) - prefer recent versions
+    const versionCounts = new Map<string, number>();
+    nodes.forEach(n => {
+      const count = versionCounts.get(n.version) || 0;
+      versionCounts.set(n.version, count + 1);
+    });
+    const majorityVersionCount = Math.max(...Array.from(versionCounts.values()));
+    const versionScore = (majorityVersionCount / nodes.length) * 100;
+
+    // Weighted average
+    const healthScore = (
+      onlineScore * 0.40 +
+      avgUptimeScore * 0.30 +
+      storageScore * 0.15 +
+      versionScore * 0.15
+    );
+
+    return Math.min(100, Math.max(0, healthScore));
+  };
+
+  const targetHealth = calculateHealthScore();
   const [healthPercentage, setHealthPercentage] = useState(0);
 
   useEffect(() => {
@@ -101,7 +151,9 @@ export function NetworkHealth({ activeNodes, totalNodes }: NetworkHealthProps) {
          </ResponsiveContainer>
          <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-3xl font-bold text-foreground">{healthPercentage.toFixed(1)}%</span>
-            <span className="text-sm text-muted-foreground mt-1">{activeNodes}/{totalNodes} Nodes</span>
+            <span className="text-sm text-muted-foreground mt-1">
+              {healthPercentage >= 80 ? "Excellent" : healthPercentage >= 60 ? "Good" : healthPercentage >= 40 ? "Fair" : "Poor"}
+            </span>
          </div>
        </div>
        

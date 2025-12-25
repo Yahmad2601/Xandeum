@@ -17,7 +17,13 @@ export async function registerRoutes(
 
   // ===== NODE ENDPOINTS =====
   app.get(api.nodes.list.path, async (req, res) => {
-    const nodes = await storage.getNodes();
+    const allNodes = await storage.getNodes();
+    // Filter out test nodes (localhost, test pubkeys)
+    const nodes = allNodes.filter(node => 
+      !node.ip.startsWith('127.') && 
+      !node.ip.startsWith('localhost') && 
+      !node.pubkey.toLowerCase().includes('test')
+    );
     res.json(nodes);
   });
 
@@ -100,6 +106,15 @@ export async function registerRoutes(
   app.get(api.crawler.status.path, async (req, res) => {
     const status = crawler.getStatus();
     res.json(status);
+  });
+
+  // ===== ACTIVITY ENDPOINTS =====
+  
+  // Get recent activities for the live feed
+  app.get('/api/activities', async (req, res) => {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const activities = await storage.getRecentActivities(limit);
+    res.json(activities);
   });
 
   return httpServer;

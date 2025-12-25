@@ -2,11 +2,14 @@ import { db } from "./db";
 import { 
   nodes, 
   nodeSnapshots,
+  activities,
   type Node, 
   type InsertNode, 
   type UpdateNodeRequest,
   type NodeSnapshot,
   type InsertNodeSnapshot,
+  type Activity,
+  type InsertActivity,
   type UptimeStats,
   type NodeTrend
 } from "@shared/schema";
@@ -30,8 +33,10 @@ export interface IStorage {
   // Analytics operations
   calculateUptimeStats(pubkey: string, hours: number): Promise<UptimeStats | null>;
   calculateNodeTrends(pubkey: string): Promise<NodeTrend | null>;
-  updateUptimeScores(): Promise<void>;
-}
+  updateUptimeScores(): Promise<void>;  
+  // Activity operations
+  recordActivity(activity: InsertActivity): Promise<void>;
+  getRecentActivities(limit?: number): Promise<Activity[]>;}
 
 export class DatabaseStorage implements IStorage {
   // ===== NODE OPERATIONS =====
@@ -73,13 +78,14 @@ export class DatabaseStorage implements IStorage {
           country: sql`EXCLUDED.country`,
           city: sql`EXCLUDED.city`,
           status: sql`EXCLUDED.status`,
-          totalStorage: sql`EXCLUDED."totalStorage"`,
-          stoincEarnings: sql`EXCLUDED."stoincEarnings"`,
-          networkCapacity: sql`EXCLUDED."networkCapacity"`,
-          stoincGenerated: sql`EXCLUDED."stoincGenerated"`,
-          uptimeHistory: sql`EXCLUDED."uptimeHistory"`,
-          weeklyUptimeHistory: sql`EXCLUDED."weeklyUptimeHistory"`,
-          lastUpdated: sql`EXCLUDED."lastUpdated"`,
+          totalStorage: sql`EXCLUDED.total_storage`,
+          storageUsed: sql`EXCLUDED.storage_used`,
+          stoincEarnings: sql`EXCLUDED.stoinc_earnings`,
+          networkCapacity: sql`EXCLUDED.network_capacity`,
+          stoincGenerated: sql`EXCLUDED.stoinc_generated`,
+          uptimeHistory: sql`EXCLUDED.uptime_history`,
+          weeklyUptimeHistory: sql`EXCLUDED.weekly_uptime_history`,
+          lastUpdated: sql`EXCLUDED.last_updated`,
           // Note: uptimeScore and reliabilityRank are managed by updateUptimeScores()
         },
       });
@@ -217,6 +223,19 @@ export class DatabaseStorage implements IStorage {
     for (let i = 0; i < scores.length; i++) {
       await this.updateNode(scores[i].pubkey, { reliabilityRank: i + 1 });
     }
+  }
+
+  // ===== ACTIVITY OPERATIONS =====
+  async recordActivity(activity: InsertActivity): Promise<void> {
+    await db.insert(activities).values(activity);
+  }
+
+  async getRecentActivities(limit: number = 50): Promise<Activity[]> {
+    return await db
+      .select()
+      .from(activities)
+      .orderBy(desc(activities.timestamp))
+      .limit(limit);
   }
 }
 
