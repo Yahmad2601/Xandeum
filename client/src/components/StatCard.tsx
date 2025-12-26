@@ -8,7 +8,7 @@ interface StatCardProps {
   trendUp?: boolean;
   icon?: React.ReactNode;
   className?: string;
-  color?: "blue" | "teal" | "orange" | "purple";
+  color?: "blue" | "teal" | "orange" | "purple" | "green";
 }
 
 export function StatCard({ title, value, trend, trendUp, icon, className, color = "blue" }: StatCardProps) {
@@ -17,6 +17,7 @@ export function StatCard({ title, value, trend, trendUp, icon, className, color 
     teal: "text-teal-500 bg-teal-500/10",
     orange: "text-orange-500 bg-orange-500/10",
     purple: "text-purple-500 bg-purple-500/10",
+    green: "text-emerald-500 bg-emerald-500/10",
   };
 
   return (

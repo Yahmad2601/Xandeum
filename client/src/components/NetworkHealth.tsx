@@ -3,7 +3,7 @@ import { RadialBarChart, RadialBar, PolarAngleAxis, ResponsiveContainer } from "
 
 interface Node {
   status: string;
-  uptimeScore: number;
+  uptimeScore: number | null;
   version: string;
   totalStorage: number;
   storageUsed: number;

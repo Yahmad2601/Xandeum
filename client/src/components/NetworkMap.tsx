@@ -154,8 +154,7 @@ const locationCoordinates: Record<string, [number, number]> = {
   "Washington": [-77.0369, 38.9072],
   "Vicksburg": [-90.8779, 32.3526],
   "Ashburn": [-77.4874, 39.0438],
-  "Council Bluffs": [-95.8608, 41.261921],
-  "Cairo": [31.2357, 30.0444]
+  "Council Bluffs": [-95.8608, 41.261921]
 };
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";

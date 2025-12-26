@@ -154,7 +154,7 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
       'Location',
       'Status',
       'Version',
-      'XDN Score',
+
       'Uptime Score (%)',
       'Storage (GB)',
       'STOINC Earnings',
@@ -170,7 +170,6 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
       `${node.city || 'Unknown'}, ${countryNames[node.country] || node.country || 'Unknown'}`,
       node.status,
       node.version,
-      getXdnScore(node),
       node.uptimeScore || 0,
       node.totalStorage,
       node.stoincEarnings,
