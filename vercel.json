@@ -9,9 +9,9 @@
     }
   },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    }
+    { "source": "/api/nodes", "destination": "/api/nodes" },
+    { "source": "/api/activities", "destination": "/api/activities" },
+    { "source": "/api/crawler/status", "destination": "/api/crawler/status" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
