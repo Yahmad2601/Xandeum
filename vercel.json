@@ -9,6 +9,7 @@
     }
   },
   "rewrites": [
+    { "source": "/api/nodes/:pubkey", "destination": "/api/nodes/[pubkey]" },
     { "source": "/api/nodes", "destination": "/api/nodes" },
     { "source": "/api/activities", "destination": "/api/activities" },
     { "source": "/api/crawler/status", "destination": "/api/crawler/status" },
