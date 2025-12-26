@@ -1,7 +1,19 @@
-import "dotenv/config";
-import { db } from "../server/db";
-import { activities } from "../shared/schema";
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
+import { pgTable, text, serial, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { desc } from "drizzle-orm";
+
+const { Pool } = pg;
+
+// Define schema inline for serverless
+const activities = pgTable("activities", {
+  id: serial("id").primaryKey(),
+  type: text("type", { enum: ["earnings", "status-change", "upgrade", "storage-commit", "new-node"] }).notNull(),
+  nodeId: text("node_id"),
+  message: text("message").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, any>>(),
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull().defaultNow(),
+});
 
 // GET /api/activities - List recent activities
 export default async function handler(req: any, res: any) {
@@ -18,12 +30,24 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    if (!process.env.DATABASE_URL) {
+      return res.status(500).json({ message: "DATABASE_URL not configured" });
+    }
+
+    const pool = new Pool({ 
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    const db = drizzle(pool);
+
     const limit = parseInt(req.query?.limit as string) || 20;
     const recentActivities = await db
       .select()
       .from(activities)
       .orderBy(desc(activities.timestamp))
       .limit(limit);
+    
+    await pool.end();
     return res.status(200).json(recentActivities);
   } catch (error) {
     console.error("API Error:", error);
