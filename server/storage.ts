@@ -142,15 +142,15 @@ export class DatabaseStorage implements IStorage {
     if (snapshots.length === 0) return null;
 
     const totalChecks = snapshots.length;
-    const activeChecks = snapshots.filter(s => s.status === 'active').length;
-    const offlineChecks = totalChecks - activeChecks;
-    const uptimePercentage = (activeChecks / totalChecks) * 100;
+    const onlineChecks = snapshots.filter(s => s.status === 'online').length;
+    const offlineChecks = totalChecks - onlineChecks;
+    const uptimePercentage = (onlineChecks / totalChecks) * 100;
 
     return {
       pubkey,
       uptimePercentage,
       totalChecks,
-      activeChecks,
+      activeChecks: onlineChecks,
       offlineChecks,
       firstSeen: snapshots[0].timestamp,
       lastSeen: snapshots[snapshots.length - 1].timestamp,
@@ -167,7 +167,7 @@ export class DatabaseStorage implements IStorage {
       const end = new Date(now.getTime() - i * 60 * 60 * 1000);
       const hourSnapshots = await this.getSnapshotsInRange(pubkey, start, end);
       const uptime = hourSnapshots.length > 0
-        ? (hourSnapshots.filter(s => s.status === 'active').length / hourSnapshots.length) * 100
+        ? (hourSnapshots.filter(s => s.status === 'online').length / hourSnapshots.length) * 100
         : 0;
       hourlyUptime.push(Math.round(uptime * 10) / 10);
     }
@@ -179,7 +179,7 @@ export class DatabaseStorage implements IStorage {
       const end = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const daySnapshots = await this.getSnapshotsInRange(pubkey, start, end);
       const uptime = daySnapshots.length > 0
-        ? (daySnapshots.filter(s => s.status === 'active').length / daySnapshots.length) * 100
+        ? (daySnapshots.filter(s => s.status === 'online').length / daySnapshots.length) * 100
         : 0;
       dailyUptime.push(Math.round(uptime * 10) / 10);
     }
@@ -191,7 +191,7 @@ export class DatabaseStorage implements IStorage {
       const end = new Date(now.getTime() - i * 7 * 24 * 60 * 60 * 1000);
       const weekSnapshots = await this.getSnapshotsInRange(pubkey, start, end);
       const uptime = weekSnapshots.length > 0
-        ? (weekSnapshots.filter(s => s.status === 'active').length / weekSnapshots.length) * 100
+        ? (weekSnapshots.filter(s => s.status === 'online').length / weekSnapshots.length) * 100
         : 0;
       weeklyUptime.push(Math.round(uptime * 10) / 10);
     }

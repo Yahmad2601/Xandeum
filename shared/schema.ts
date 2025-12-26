@@ -9,7 +9,7 @@ export const nodes = pgTable("nodes", {
   version: text("version").notNull(),
   country: text("country").notNull(),
   city: text("city").default("Unknown"), // City where node is located
-  status: text("status", { enum: ["active", "offline"] }).notNull(),
+  status: text("status", { enum: ["online", "offline"] }).notNull(),
   isPublic: boolean("is_public").notNull().default(true), // Whether node is publicly accessible
   uptime: integer("uptime").notNull().default(0), // Process uptime in seconds (how long node has been running)
   totalStorage: doublePrecision("total_storage").notNull(), // Storage committed (capacity) in GB
@@ -29,7 +29,7 @@ export const nodes = pgTable("nodes", {
 export const nodeSnapshots = pgTable("node_snapshots", {
   id: serial("id").primaryKey(),
   pubkey: text("pubkey").notNull(), // References nodes.pubkey
-  status: text("status", { enum: ["active", "offline"] }).notNull(),
+  status: text("status", { enum: ["online", "offline"] }).notNull(),
   ip: text("ip"),
   version: text("version"),
   totalStorage: doublePrecision("total_storage"),

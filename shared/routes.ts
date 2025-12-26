@@ -81,7 +81,7 @@ export const api = {
         200: z.array(z.object({
           id: z.number(),
           pubkey: z.string(),
-          status: z.enum(['active', 'offline']),
+          status: z.enum(['online', 'offline']),
           ip: z.string().nullable(),
           version: z.string().nullable(),
           totalStorage: z.number().nullable(),

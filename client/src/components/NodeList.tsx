@@ -14,21 +14,27 @@ function formatUptime(seconds: number): string {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { 
-  LayoutGrid, 
-  List as ListIcon, 
-  RefreshCw, 
-  Filter, 
-  Bookmark, 
-  ChevronDown,
+import {
+  LayoutGrid,
+  List as ListIcon,
+  RefreshCw,
   Search,
   ChevronLeft,
   ChevronRight,
-  Download
+  Download,
+  Key,
+  Filter
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocation } from "wouter";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const countryNames: Record<string, string> = {
   "US": "United States",
@@ -59,18 +65,71 @@ interface NodeListProps {
   isRefreshing?: boolean;
 }
 
+type PresetFilter = "all" | "topStorage" | "topCredits" | "highestUptime";
+
 export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [viewMode, setViewMode] = useState<"list" | "grid">(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      return "grid";
+    }
+    return "list";
+  });
   const [filter, setFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [preset, setPreset] = useState<PresetFilter>("all");
+  const [itemsPerPage, setItemsPerPage] = useState(15);
   const [, setLocation] = useLocation();
-  const itemsPerPage = 15;
+  const isMobile = useIsMobile();
+  const effectiveViewMode = isMobile ? "grid" : viewMode;
 
-  const filteredNodes = nodes.filter(node => 
-    node.ip.includes(filter) || 
-    node.pubkey.toLowerCase().includes(filter.toLowerCase()) ||
-    node.country.toLowerCase().includes(filter.toLowerCase())
-  );
+  const query = filter.trim().toLowerCase();
+
+  const baseFilteredNodes = nodes.filter((node) => {
+    if (!query) return true;
+
+    const locationText = [node.city, countryNames[node.country], node.country]
+      .filter(Boolean)
+      .join(" ");
+
+    const candidateValues = [
+      `node ${node.ip}`,
+      node.ip,
+      node.pubkey,
+      node.version,
+      locationText,
+      node.status,
+      node.isPublic ? "public" : "private",
+      node.reliabilityRank?.toString(),
+    ];
+
+    return candidateValues.some((value) =>
+      value?.toLowerCase().includes(query)
+    );
+  });
+
+  const applyPresetFilter = (list: Node[]): Node[] => {
+    if (preset === "all") return list;
+
+    const topSlice = Math.max(1, Math.ceil(list.length * 0.2));
+
+    if (preset === "topStorage") {
+      return [...list]
+        .sort((a, b) => (b.totalStorage ?? 0) - (a.totalStorage ?? 0))
+        .slice(0, topSlice);
+    }
+
+    if (preset === "topCredits") {
+      return [...list]
+        .sort((a, b) => (b.stoincEarnings ?? 0) - (a.stoincEarnings ?? 0))
+        .slice(0, topSlice);
+    }
+
+    return [...list]
+      .sort((a, b) => (b.uptimeScore ?? 0) - (a.uptimeScore ?? 0))
+      .slice(0, topSlice);
+  };
+
+  const filteredNodes = applyPresetFilter(baseFilteredNodes);
 
   const totalPages = Math.ceil(filteredNodes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -141,38 +200,18 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
     <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
       <div className="p-6 space-y-6">
         {/* Header Controls */}
-        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:w-96">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between w-full">
+          <div className="relative w-full" data-tour="search-bar">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
               placeholder="Search nodes..." 
-              className="pl-9 bg-background/50 border-input"
+              className="pl-9 h-12 text-base bg-background/50 border-input rounded-xl"
               value={filter}
               onChange={(e) => {
                 setFilter(e.target.value);
                 setCurrentPage(1); // Reset to first page on search
               }}
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-               <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100">
-                  <span className="text-xs">⌘</span>K
-                </kbd>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <Button variant="outline" className="border-input bg-background/50 gap-2">
-              <Filter className="w-4 h-4" />
-              Filters
-            </Button>
-            <Button 
-              variant="outline" 
-              className="border-input bg-background/50 gap-2"
-              onClick={exportToCSV}
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </Button>
           </div>
         </div>
 
@@ -180,15 +219,85 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-muted/30 p-4 rounded-xl border border-border/50">
           <div>
             <h3 className="font-semibold text-lg">
-              {activeCount}/{nodes.length} Active
+              {activeCount}/{nodes.length} Online
             </h3>
             <p className="text-sm text-muted-foreground">
               Fetched {nodes.length} nodes in 0.41s
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex items-center bg-background border border-input rounded-lg p-1">
+          <div className="flex w-full flex-col gap-3 md:flex-row md:w-auto md:items-center md:justify-end" data-tour="filters">
+            <div className="flex w-full flex-col gap-2 sm:flex-row">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center border-input bg-background/50 gap-2 hover:bg-accent focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-auto"
+                  >
+                    <Filter className="w-4 h-4" />
+                    {preset === "all"
+                      ? "All Nodes"
+                      : preset === "topStorage"
+                      ? "Top Storage"
+                      : preset === "topCredits"
+                      ? "Top Credits"
+                      : "Highest Uptime"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setPreset("all");
+                      setCurrentPage(1);
+                    }}
+                  >
+                    All Nodes
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setPreset("topStorage");
+                      setCurrentPage(1);
+                    }}
+                  >
+                    Top Storage Providers
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setPreset("topCredits");
+                      setCurrentPage(1);
+                    }}
+                  >
+                    Top Credit Earners
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setPreset("highestUptime");
+                      setCurrentPage(1);
+                    }}
+                  >
+                    Highest Uptime
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="outline"
+                className="w-full justify-center border-input bg-background/50 gap-2 hover:bg-accent focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-auto"
+                onClick={exportToCSV}
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-center border-input bg-background/50 gap-2 hover:bg-accent focus-visible:ring-0 focus-visible:ring-offset-0 sm:w-auto"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+            <div className="hidden items-center bg-background border border-input rounded-lg p-1 md:flex">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -206,25 +315,11 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                 <LayoutGrid className="w-4 h-4" />
               </Button>
             </div>
-
-            <Button 
-              variant="outline" 
-              className="border-input bg-background/50 gap-2"
-              onClick={onRefresh}
-              disabled={isRefreshing}
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              Refresh in 25s
-            </Button>
-            
-            <Button variant="outline" className="border-input bg-background/50">
-              Clear Filters
-            </Button>
           </div>
         </div>
 
         {/* Content */}
-        {viewMode === "list" ? (
+        {effectiveViewMode === "list" ? (
           <div className="rounded-xl border border-border overflow-hidden bg-background/30 backdrop-blur-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -320,7 +415,12 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium text-lg">Node {node.ip} ({getShortId(node.pubkey)})</h3>
-                    <p className="text-xs text-muted-foreground font-mono mt-0.5">{node.pubkey}</p>
+                    <div className="flex items-start gap-1 mt-0.5">
+                      <Key className="w-3 h-3 text-muted-foreground/60" />
+                      <p className="text-xs text-muted-foreground font-mono break-all leading-relaxed">
+                        {node.pubkey}
+                      </p>
+                    </div>
                     <p className="text-sm text-muted-foreground mt-1">{node.city || "Unknown"}, {countryNames[node.country] || node.country || "Unknown"}</p>
                   </div>
                   <Badge variant="outline" className={`
@@ -357,6 +457,14 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
                         : `${(node.totalStorage * 1024).toFixed(0)} MB`}
                     </p>
                   </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Version</p>
+                    <p className="font-mono text-sm">{truncateVersion(node.version)}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-muted-foreground mb-1">STOINC Earnings</p>
+                    <p className="font-mono text-sm">{(node.stoincEarnings ?? 0).toFixed(2)} STOINC</p>
+                  </div>
                 </div>
 
 
@@ -379,7 +487,10 @@ export function NodeList({ nodes, onRefresh, isRefreshing }: NodeListProps) {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Rows per page:</span>
-              <Select defaultValue="15">
+              <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                setItemsPerPage(Number(value));
+                setCurrentPage(1);
+              }}>
                 <SelectTrigger className="w-[70px] h-8">
                   <SelectValue placeholder="15" />
                 </SelectTrigger>

@@ -11,6 +11,8 @@ import { TopRegions } from "@/components/TopRegions";
 import { NetworkHealth } from "@/components/NetworkHealth";
 import { UptimeChart } from "@/components/UptimeChart";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { NodeComparison } from "@/components/NodeComparison";
+import { TourGuide } from "@/components/TourGuide";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
@@ -54,6 +56,7 @@ export default function Home() {
   const { mutate: refresh, isPending: isRefreshing } = useRefreshNodes();
   const { data: crawlerStatus } = useCrawlerStatus();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
 
   // Derived stats
   // Note: totalStorage is in GB, storageUsed is in MB (converted in crawler)
@@ -74,7 +77,9 @@ export default function Home() {
 
   // Helper function to format storage with appropriate units
   const formatStorage = (gb: number) => {
-    if (gb < 1024) {
+    if (gb < 1) {
+      return `${(gb * 1024).toFixed(2)} MB`;
+    } else if (gb < 1024) {
       return `${gb.toFixed(2)} GB`;
     } else if (gb < 1024 * 1024) {
       return `${(gb / 1024).toFixed(2)} TB`;
@@ -107,6 +112,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
+      <TourGuide onComplete={() => {}} />
       <CommandPalette open={searchOpen} setOpen={setSearchOpen} nodes={nodes} />
 
       {/* Header */}
@@ -123,12 +129,6 @@ export default function Home() {
 
           <nav className="hidden md:flex items-center gap-6">
             <button 
-              onClick={() => document.getElementById('network-map')?.scrollIntoView({ behavior: 'smooth' })}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Network Map
-            </button>
-            <button 
               onClick={() => document.getElementById('uptime-trend')?.scrollIntoView({ behavior: 'smooth' })}
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -139,6 +139,15 @@ export default function Home() {
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Network Nodes
+            </button>
+            <button 
+              onClick={() => {
+                setComparisonOpen(true);
+                document.getElementById('node-comparison')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Node Comparison
             </button>
           </nav>
           
@@ -166,26 +175,10 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Top Section: Stats & Health */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-tour="network-stats">
           {/* Left Column: Stats Grid (2/3 width) */}
           <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4 h-full">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
-              <StatCard 
-                title="Node Visibility" 
-                value={`${publicNodes} / ${privateNodes}`} 
-                trend={`${publicNodes} public, ${privateNodes} private`}
-                trendUp={true}
-                icon={<Eye className="w-8 h-8" />}
-                color="purple"
-              />
-              <StatCard 
-                title="Storage Committed" 
-                value={formatStorage(totalStorageCommittedGB)} 
-                trend={`${formatStorage(totalStorageUsedGB)} used`}
-                trendUp={true}
-                icon={<Database className="w-8 h-8" />}
-                color="blue"
-              />
               <StatCard 
                 title="Total Nodes" 
                 value={totalNodes} 
@@ -202,6 +195,24 @@ export default function Home() {
                 icon={<Radio className="w-8 h-8" />}
                 color="green"
               />
+              <StatCard 
+                title="Node Visibility" 
+                value={`${publicNodes} / ${privateNodes}`} 
+                trend={`${publicNodes} public, ${privateNodes} private`}
+                trendUp={true}
+                icon={<Eye className="w-8 h-8" />}
+                color="purple"
+              />
+              <StatCard 
+                title="Storage Committed" 
+                value={formatStorage(totalStorageCommittedGB)} 
+                trend={`${formatStorage(totalStorageUsedGB)} used`}
+                trendUp={true}
+                icon={<Database className="w-8 h-8" />}
+                color="blue"
+              />
+              
+              
               <StatCard 
                 title="Total STOINC Generated" 
                 value={`$${totalStoincGenerated.toLocaleString()}`}
@@ -227,7 +238,7 @@ export default function Home() {
         </div>
 
         {/* Map & Activity Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6" id="network-map">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6" id="network-map" data-tour="network-map">
           {/* Global Network Map (3/4 width) */}
           <div className="lg:col-span-3 space-y-4">
             <h2 className="text-lg font-semibold">Global Network Map</h2>
@@ -260,10 +271,15 @@ export default function Home() {
         </section>
 
         {/* Nodes List */}
-        <section id="network-nodes">
+        <section id="network-nodes" data-tour="node-list">
           <NodeList nodes={nodes} onRefresh={() => refresh()} isRefreshing={isRefreshing} />
         </section>
       </main>
+
+      <div id="node-comparison" className="h-0 w-px" aria-hidden="true" />
+
+      {/* Node Comparison Floating Button */}
+      <NodeComparison nodes={nodes} open={comparisonOpen} onOpenChange={setComparisonOpen} />
 
       {/* Footer */}
       <footer className="border-t border-border bg-background/50 backdrop-blur-lg mt-12">
