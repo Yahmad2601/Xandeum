@@ -7,9 +7,9 @@ type Theme = "light" | "light-high-contrast" | "dark" | "dark-high-contrast";
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== "undefined") {
-      return (localStorage.getItem("theme") as Theme) || "dark-high-contrast";
+      return (localStorage.getItem("theme") as Theme) || "dark";
     }
-    return "dark-high-contrast";
+    return "dark";
   });
 
   useEffect(() => {
